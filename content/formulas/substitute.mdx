@@ -1,0 +1,97 @@
+---
+slug: substitute
+name: SUBSTITUTE
+category: Text
+summary: Replace text inside a string
+description: SUBSTITUTE swaps one piece of text for another inside a cell. Unlike Find and Replace it leaves the original untouched, which makes it the right tool for cleaning data that arrives the same way every month.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/kpi-dashboard.xlsx
+related: [TRIM, LEFT, LEN, TEXTJOIN]
+syntax: '=SUBSTITUTE(text, old_text, new_text, [instance_num])'
+arguments:
+  - name: text
+    required: true
+    description: The text to work on.
+  - name: old_text
+    required: true
+    description: What to look for. Case sensitive.
+  - name: new_text
+    required: true
+    description: What to put in its place. Use "" to delete.
+  - name: instance_num
+    required: false
+    description: Which occurrence to replace. Omit it and every occurrence is replaced.
+demo:
+  file: Imported ledger.xlsx
+  columns: [A, B, C, D]
+  headers: [Reference, Description, Amount, Account]
+  editable: [2]
+  money: [2]
+  rows:
+    - ['REF/2026/0041', 'Sales - North region', 12400, 'AC-4000']
+    - ['REF/2026/0042', 'Sales - South region', 8100, 'AC-4000']
+    - ['REF/2026/0043', 'Rent - Q1', 9600, 'AC-5200']
+    - ['REF/2026/0044', 'Sales - North region', 15250, 'AC-4000']
+    - ['REF/2026/0045', 'Utilities - Q1', 7300, 'AC-5210']
+    - ['REF/2026/0046', 'Sales - East region', 4880, 'AC-4000']
+  presets:
+    - label: Change a separator
+      formula: '=SUBSTITUTE(A2, "/", "-")'
+    - label: Delete text
+      formula: '=SUBSTITUTE(A2, "REF/", "")'
+    - label: One occurrence only
+      formula: '=SUBSTITUTE(A2, "/", "-", 2)'
+    - label: Tidy a description
+      formula: '=SUBSTITUTE(B3, " - ", ": ")'
+mistakes:
+  - level: error
+    title: It is case sensitive
+    body: SUBSTITUTE("North","north","South") changes nothing, because the case does not match. REPLACE is not an alternative — it works on positions rather than content. To ignore case you have to normalise with UPPER or LOWER first.
+  - level: warning
+    title: Replacing every occurrence when you meant one
+    body: Without the fourth argument, every match is replaced. On a reference like REF/2026/0041 that turns all the separators, not just the first. Use instance_num when position matters.
+  - level: warning
+    title: Confusing SUBSTITUTE with REPLACE
+    body: SUBSTITUTE finds text and swaps it. REPLACE swaps a fixed number of characters at a fixed position, regardless of content. They solve different problems and are easy to reach for in the wrong order.
+  - level: warning
+    title: The result is always text
+    body: Stripping a currency symbol leaves you with text that looks like a number. Wrap it in VALUE if you need to add it up, or the SUM below will quietly ignore it.
+faq:
+  - q: What is the difference between SUBSTITUTE and REPLACE?
+    a: SUBSTITUTE works on content — find this text, swap it. REPLACE works on position — swap four characters starting at position three. Use SUBSTITUTE unless you genuinely know the position and not the content.
+  - q: How do I remove several different characters?
+    a: Nest them. =SUBSTITUTE(SUBSTITUTE(A2,"(",""),")","") removes both brackets. It gets unwieldy past three or four, at which point Power Query is the better answer.
+  - q: How do I make it ignore case?
+    a: Normalise first. =SUBSTITUTE(UPPER(A2),"NORTH","SOUTH") matches regardless of the original case, though the result is now uppercase throughout.
+  - q: Can SUBSTITUTE remove non-breaking spaces?
+    a: Yes, and this is one of its most useful jobs. =TRIM(SUBSTITUTE(A2,CHAR(160)," ")) handles text pasted from a web page, which TRIM alone cannot clean.
+  - q: Why use it instead of Find and Replace?
+    a: Find and Replace is a one-off action on the data itself. SUBSTITUTE is a formula that re-applies every time the source changes, which is what you want for a file you receive monthly.
+---
+
+## Examples
+
+### 1. Changing a separator
+
+<Formula>=SUBSTITUTE(A2, "/", "-")</Formula>
+
+Every forward slash becomes a hyphen. With no fourth argument, all occurrences are replaced.
+
+### 2. Deleting rather than replacing
+
+<Formula>=SUBSTITUTE(A2, "REF/", "")</Formula>
+
+An empty string as the replacement removes the text entirely. This is the standard way to strip a prefix, a currency symbol, or stray punctuation.
+
+### 3. One occurrence only
+
+<Formula>=SUBSTITUTE(A2, "/", "-", 2)</Formula>
+
+The fourth argument picks which occurrence. Here only the second slash changes, leaving the first alone — useful when a code has a structure you want to keep partly intact.
+
+<Callout type="tip" title="The cleaning combination">
+=TRIM(SUBSTITUTE(A2, CHAR(160), " ")) is worth memorising. It converts non-breaking spaces to ordinary ones and then removes them. Between them these two functions fix the large majority of failed lookups on imported text.
+</Callout>

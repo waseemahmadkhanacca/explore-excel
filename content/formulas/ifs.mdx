@@ -1,0 +1,96 @@
+---
+slug: ifs
+name: IFS
+category: Logical
+summary: Test several conditions in order
+description: IFS checks conditions one after another and returns the result of the first one that is true. It does what nested IF statements do, without the nesting, and is far easier to read six months later.
+versions: [Excel 2019 and later]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [IF, IFERROR, AND, COUNTIFS]
+syntax: '=IFS(condition1, value1, [condition2, value2], ...)'
+arguments:
+  - name: condition1
+    required: true
+    description: The first test. If it is true, value1 is returned and nothing else is evaluated.
+  - name: value1
+    required: true
+    description: What to return when condition1 passes.
+  - name: condition2, value2
+    required: false
+    description: Further pairs, tested in order. Up to 127 of them.
+demo:
+  file: Receivables ageing.xlsx
+  columns: [A, B, C, D]
+  headers: [Invoice, Customer, Days overdue, Amount]
+  editable: [2, 3]
+  money: [3]
+  rows:
+    - ['INV-201', 'Northgate', 0, 4850]
+    - ['INV-202', 'Bridgeway', 18, 12300]
+    - ['INV-203', 'Castleton', 44, 2975]
+    - ['INV-204', 'Dunmore', 71, 18400]
+    - ['INV-205', 'Eastvale', 118, 6220]
+    - ['INV-206', 'Fairholm', 9, 3140]
+  presets:
+    - label: Ageing bucket
+      formula: '=IFS(C2=0, "Current", C2<=30, "1-30 days", C2<=60, "31-60 days", C2<=90, "61-90 days", TRUE, "90+ days")'
+    - label: A row further down
+      formula: '=IFS(C5=0, "Current", C5<=30, "1-30 days", C5<=60, "31-60 days", C5<=90, "61-90 days", TRUE, "90+ days")'
+    - label: Escalation level
+      formula: '=IFS(C6>90, "Legal", C6>60, "Final notice", C6>30, "Reminder", TRUE, "None")'
+    - label: Priority by value
+      formula: '=IFS(D4>15000, "High", D4>5000, "Medium", TRUE, "Low")'
+mistakes:
+  - level: error
+    title: No default when nothing matches
+    body: IFS has no else. If every condition is false you get #N/A. Add TRUE as the final condition with your catch-all value — TRUE is always true, so it acts as the else.
+  - level: error
+    title: Not available in Excel 2016
+    body: IFS arrived in Excel 2019. Earlier versions return #NAME?. Nested IF works everywhere, which is still a reason to use it for files that leave your organisation.
+  - level: warning
+    title: Conditions in the wrong order
+    body: The first true condition wins and the rest are never evaluated. Testing C2<=90 before C2<=30 means everything under 30 is caught by the wrong branch. Order from most specific to least.
+  - level: warning
+    title: Overlapping bands that hide a bug
+    body: Because only the first match counts, overlapping conditions do not error — they silently pick one. That makes a wrong boundary very hard to spot. Check the edges deliberately, especially the zero case.
+faq:
+  - q: What is the difference between IFS and nested IF?
+    a: They do the same job. IFS is flat and reads top to bottom, nested IF is layered and needs careful bracket counting. IFS is clearer above two or three conditions, but it requires Excel 2019.
+  - q: How do I add an else?
+    a: Make TRUE the last condition. =IFS(A2>10,"big",TRUE,"small") returns small for anything not caught earlier, because TRUE always evaluates to true.
+  - q: Does IFS evaluate every condition?
+    a: No. It stops at the first true one. That matters if a later condition would error — it will never be reached, so no error appears.
+  - q: Can I use IFS for a lookup?
+    a: You can, but you should not for more than a handful of values. A lookup table with XLOOKUP or INDEX/MATCH is easier to change, because the values live in cells rather than inside a formula.
+  - q: What if two conditions are both true?
+    a: The first one wins. This is useful when you order from most to least specific, and a trap when you did not intend the overlap.
+---
+
+## Examples
+
+### 1. Ageing buckets
+
+The classic use, and a genuine improvement on nested IF.
+
+<Formula>=IFS(C2=0, "Current", C2<=30, "1-30 days", C2<=60, "31-60 days", C2<=90, "61-90 days", TRUE, "90+ days")</Formula>
+
+Read it top to bottom: is it zero? Under thirty? Under sixty? The first match wins. Written as nested IF this needs four levels of brackets and considerably more care.
+
+### 2. Order matters
+
+<Formula>=IFS(C6>90, "Legal", C6>60, "Final notice", C6>30, "Reminder", TRUE, "None")</Formula>
+
+Here the conditions run from largest to smallest. Reverse them and everything over 30 days would be caught by the first test and labelled Reminder, including the 118-day invoice.
+
+<Callout type="warning" title="Always end with TRUE">
+Without a final TRUE, any row that matches nothing returns #N/A. In a report that looks like a broken formula rather than an unhandled case. Make the catch-all explicit.
+</Callout>
+
+### 3. Banding on value rather than age
+
+<Formula>=IFS(D4>15000, "High", D4>5000, "Medium", TRUE, "Low")</Formula>
+
+The same pattern applied to amounts. Three bands, ordered from highest, with a catch-all at the end.

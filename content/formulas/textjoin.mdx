@@ -1,0 +1,93 @@
+---
+slug: textjoin
+name: TEXTJOIN
+category: Text
+summary: Join text with a delimiter
+description: TEXTJOIN combines text from several cells into one, separated by whatever character you choose, and can skip the empty ones. It replaces the long chains of ampersands that used to be needed for the same job.
+versions: [Excel 2019 and later]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [CONCAT, TRIM, SUBSTITUTE, LEFT]
+syntax: '=TEXTJOIN(delimiter, ignore_empty, text1, [text2], ...)'
+arguments:
+  - name: delimiter
+    required: true
+    description: What to put between each item. A comma and space ", " is common. Use "" for nothing.
+  - name: ignore_empty
+    required: true
+    description: TRUE skips blank cells. FALSE includes them, producing consecutive delimiters. TRUE is almost always what you want.
+  - name: text1, text2
+    required: true
+    description: The cells, ranges or literal text to join. A range counts as one argument.
+demo:
+  file: Contact list.xlsx
+  columns: [A, B, C, D]
+  headers: [First name, Last name, City, Country]
+  editable: []
+  rows:
+    - ['Ayesha', 'Khan', 'Lahore', 'Pakistan']
+    - ['James', 'Brown', 'Leeds', 'United Kingdom']
+    - ['Mei', 'Chen', 'Singapore', 'Singapore']
+    - ['Sofia', 'Diaz', 'Madrid', 'Spain']
+    - ['Omar', 'Farid', 'Dubai', 'UAE']
+    - ['Nina', 'Petrov', 'Sofia', 'Bulgaria']
+  presets:
+    - label: Join a column
+      formula: '=TEXTJOIN(", ", TRUE, C2:C7)'
+    - label: Build a full name
+      formula: '=TEXTJOIN(" ", TRUE, A2, B2)'
+    - label: Address line
+      formula: '=TEXTJOIN(", ", TRUE, A3, B3, C3, D3)'
+    - label: Different delimiter
+      formula: '=TEXTJOIN(" | ", TRUE, D2:D7)'
+mistakes:
+  - level: error
+    title: Not available in Excel 2016 or earlier
+    body: TEXTJOIN arrived in Excel 2019. Open the file in 2016 and every TEXTJOIN becomes #NAME?. If the file leaves your organisation, chain with ampersands instead or check what the recipient runs.
+  - level: warning
+    title: Setting ignore_empty to FALSE
+    body: With FALSE, blank cells still produce a delimiter, so you get "North,,South" with a gap in the middle. This is occasionally deliberate for fixed-width output, but it is usually a mistake.
+  - level: warning
+    title: The 32767 character limit
+    body: The result cannot exceed a cell's capacity. Joining a very long column returns #VALUE!. If you are near the limit, the output probably belongs somewhere other than a single cell.
+  - level: warning
+    title: Numbers lose their formatting
+    body: A cell displaying £1,234.00 joins as 1234. Formatting is display only. Wrap the value in TEXT with an explicit format if the appearance matters.
+faq:
+  - q: What is the difference between TEXTJOIN and CONCAT?
+    a: CONCAT joins with nothing between and cannot skip blanks. TEXTJOIN adds a delimiter and can ignore empty cells. For anything list-shaped, TEXTJOIN is the better tool.
+  - q: Can TEXTJOIN use a line break as the delimiter?
+    a: Yes, with CHAR(10). You then need to turn on Wrap Text for the cell, otherwise the line breaks are there but invisible.
+  - q: How do I join only the rows that meet a condition?
+    a: Wrap the range in an IF and enter it as an array formula, or use FILTER inside TEXTJOIN in Excel 365. In older versions this is genuinely awkward and a helper column is usually cleaner.
+  - q: Does TEXTJOIN work on numbers?
+    a: Yes, but they are converted to plain text and lose any number formatting. Use TEXT to control how they appear.
+  - q: What can I use in Excel 2016?
+    a: Chain with ampersands — =A2&" "&B2 — or use CONCATENATE. Neither can skip blanks, so you may need IF wrappers to avoid stray delimiters.
+---
+
+## Examples
+
+### 1. Joining a whole column
+
+<Formula>=TEXTJOIN(", ", TRUE, C2:C7)</Formula>
+
+One argument covers the entire range. Every city appears in a single cell, comma separated. This is the use that makes TEXTJOIN worth learning.
+
+### 2. Building a name from parts
+
+<Formula>=TEXTJOIN(" ", TRUE, A2, B2)</Formula>
+
+With TRUE as the second argument, a missing middle name produces no double space. That is the behaviour the old ampersand approach could not manage without extra IF logic.
+
+### 3. Assembling an address
+
+<Formula>=TEXTJOIN(", ", TRUE, A3, B3, C3, D3)</Formula>
+
+Individual cells rather than a range. Any that are blank are skipped, so the punctuation stays correct however complete the record is.
+
+<Callout type="tip" title="Worth knowing">
+The delimiter can be more than one character. " | " reads well in exported data, and CHAR(10) gives a line break inside the cell — useful for turning a column of items into a readable block, provided Wrap Text is enabled.
+</Callout>

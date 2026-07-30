@@ -1,0 +1,94 @@
+---
+slug: unique
+name: UNIQUE
+category: Dynamic array
+summary: Return the distinct values in a list
+description: UNIQUE strips duplicates from a range and returns what is left, spilling the results down the sheet. It replaces the Remove Duplicates command for anything that needs to stay live as the data changes.
+versions: [Excel 365, Excel 2021]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/kpi-dashboard.xlsx
+related: [FILTER, SORT, COUNTIFS, SUMIFS]
+syntax: '=UNIQUE(array, [by_col], [exactly_once])'
+arguments:
+  - name: array
+    required: true
+    description: The range to de-duplicate.
+  - name: by_col
+    required: false
+    description: FALSE or omitted compares rows. TRUE compares columns. Rows is nearly always what you want.
+  - name: exactly_once
+    required: false
+    description: TRUE returns only values appearing exactly once, discarding anything repeated. FALSE or omitted returns one of each.
+demo:
+  file: Q3 regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Order, Region, Status, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['#1041', 'North', 'Closed', 12400]
+    - ['#1042', 'South', 'Open', 8100]
+    - ['#1043', 'North', 'Open', 9600]
+    - ['#1044', 'North', 'Closed', 15250]
+    - ['#1045', 'East', 'Closed', 7300]
+    - ['#1046', 'North', 'Closed', 4880]
+  presets:
+    - label: How many are North
+      formula: '=COUNTIFS(B2:B7, "North")'
+    - label: How many are South
+      formula: '=COUNTIFS(B2:B7, "South")'
+    - label: Distinct count
+      formula: '=SUMPRODUCT(1/COUNTIFS(B2:B7, B2:B7))'
+    - label: Appears exactly once
+      formula: '=COUNTIFS(B2:B7, "East")'
+mistakes:
+  - level: error
+    title: Not available before Excel 2021
+    body: UNIQUE returns #NAME? in Excel 2019 and earlier. Use Remove Duplicates from the Data tab instead, remembering that it changes the data in place rather than producing a live list.
+  - level: error
+    title: The spill range is blocked
+    body: UNIQUE needs empty cells beneath it. Anything in the way returns #SPILL!. Because the number of distinct values changes as data is added, leave more room than you currently need.
+  - level: warning
+    title: Trailing spaces create false duplicates
+    body: A value of North and one with a trailing space are different values, so both appear in the result. This is the most common reason a unique list comes back longer than expected. Wrap the range in TRIM to be sure.
+  - level: warning
+    title: exactly_once means something different from unique
+    body: With the third argument TRUE, values that appear more than once are excluded entirely rather than reduced to one. That is a different question — which values are singletons — and mixing the two up silently drops data.
+faq:
+  - q: Why does the demo use COUNTIFS rather than UNIQUE?
+    a: The interactive grid evaluates one formula into one cell, and UNIQUE spills a list across many. The presets show the related counts. The distinct-count preset uses the SUMPRODUCT idiom that works in every version.
+  - q: How do I count distinct values without UNIQUE?
+    a: Use =SUMPRODUCT(1/COUNTIFS(range,range)). Each value contributes one divided by how many times it appears, so a value appearing three times contributes a third, three times over. It fails if the range contains blanks.
+  - q: Can UNIQUE work across several columns?
+    a: Yes. Give it a multi-column range and it returns distinct combinations of the whole row, which is how you build a unique customer and product list in one step.
+  - q: How do I sort the result?
+    a: Wrap it — =SORT(UNIQUE(B2:B7)). Dynamic array functions nest freely, and this pairing is common enough to be worth remembering.
+  - q: Does UNIQUE ignore case?
+    a: Yes. "north" and "North" are treated as the same value and only one is returned. Which one depends on which appears first.
+---
+
+## Examples
+
+### 1. The distinct list
+
+In Excel, `=UNIQUE(B2:B7)` returns North, South and East — one of each, in the order they first appear. The interactive grid above cannot show a spilled list, so the presets demonstrate the counts behind it.
+
+<Formula>=COUNTIFS(B2:B7, "North")</Formula>
+
+### 2. Counting distinct values without UNIQUE
+
+This idiom works in every version of Excel and is worth knowing even if you have UNIQUE available.
+
+<Formula>=SUMPRODUCT(1/COUNTIFS(B2:B7, B2:B7))</Formula>
+
+Each row contributes one divided by the number of times its value appears. North appears four times, so each of those four rows contributes a quarter, totalling one. Add up all the contributions and you get the number of distinct values.
+
+<Callout type="warning" title="It breaks on blanks">
+If any cell in the range is empty, COUNTIFS returns zero for it and the formula divides by zero. Restrict the range to rows that actually contain data, or use UNIQUE if your version has it.
+</Callout>
+
+### 3. Combining with SORT
+
+`=SORT(UNIQUE(B2:B7))` gives an alphabetical list of distinct regions that updates itself as data is added. Building the same thing with Remove Duplicates means redoing it by hand every time the data changes.

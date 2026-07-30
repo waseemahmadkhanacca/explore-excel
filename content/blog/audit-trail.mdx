@@ -1,0 +1,78 @@
+---
+slug: audit-trail
+title: The audit trail nobody builds until they need it
+category: Spreadsheet design
+summary: How to structure a workbook so you can answer "where did this number come from" six months later.
+description: Practical steps for making a spreadsheet defensible — from an internal auditor who spends a lot of time asking exactly that question.
+updated: 2026-07-15
+readingTime: 7
+related: [SUMIFS, INDEX, IFERROR]
+---
+
+The question always arrives at the worst time. Someone asks where a number came from, and the honest answer is that you cannot reconstruct it.
+
+I ask this question professionally. What follows is what makes the answer easy, written from the perspective of the person doing the asking.
+
+## Why it matters even without an auditor
+
+You are the main beneficiary of your own audit trail. Six months is long enough to forget your own reasoning entirely, and the workbook is the only record.
+
+The cost of building the trail is perhaps twenty minutes. The cost of reconstructing one after the fact is measured in days, and sometimes it cannot be done at all.
+
+## Keep the source untouched
+
+The raw export goes on its own sheet and nothing is done to it. No sorting, no deleting, no fixing.
+
+Cleaning happens on a separate sheet that references it, or in Power Query. That way the original remains available for comparison, and "does the cleaned data still match the export" becomes a question you can answer rather than assert.
+
+The commonest failure I see is a single sheet that has been cleaned in place over several months. There is no way to verify anything, because the thing it should be verified against no longer exists.
+
+## Every assumption in its own cell
+
+A number typed inside a formula is invisible. It cannot be found by searching, it cannot be reviewed, and it cannot be changed without editing formulas.
+
+Put assumptions in a labelled block — rate, threshold, date, whatever — and reference them. An assumptions sheet is the fastest thing to review and the first thing anyone competent will look at.
+
+Add a note beside each one saying where the figure came from. "Per Finance email 14 March" takes five seconds and answers a question that would otherwise take an hour.
+
+## Make the calculation visible
+
+A long formula doing five things at once is hard to check and harder to explain.
+
+```
+=ROUND(IFERROR(INDEX(Rates!C:C, MATCH(A2, Rates!A:A, 0)), 0) * B2 * (1 + $D$2), 2)
+```
+
+Broken into three columns — rate, base amount, adjusted — it becomes reviewable, and when a number is wrong you can see immediately which step failed.
+
+Extra columns cost nothing. Reviewability is worth a great deal.
+
+## Date and version the file
+
+`Reconciliation.xlsx` tells nobody anything. `Reconciliation-2026-07-final.xlsx` tells them when, and `final-v2-updated` tells them the process was not controlled.
+
+Use dates in ISO order — 2026-07-23 — so files sort chronologically. It is a small thing that makes a folder navigable a year later.
+
+## Record what you did, not just what you got
+
+A short log sheet: date, what changed, why. Three columns and one line per change.
+
+This feels bureaucratic until the first time someone asks why the March figure differs from the version they were sent. Then it is the most valuable sheet in the file.
+
+## Do not suppress errors on the calculation spine
+
+An error is telling you something. Wrapping it in `IFERROR` and returning zero converts a visible problem into an invisible one and produces a confident wrong answer.
+
+Use `IFNA` where a missing value is genuinely expected. Leave everything else visible. A model that errors is a model that is telling you the truth.
+
+## Reconcile to something external
+
+The strongest evidence a workbook can carry is agreement with something outside itself. A bank statement, a trial balance, a system report.
+
+Put the reconciliation in the file, with the difference calculated. A difference cell showing zero is the single most reassuring thing a reviewer can see, and if it is not zero you find out before somebody else does.
+
+## The test
+
+Hand the file to a competent colleague with no explanation and ask them to tell you where one specific number came from.
+
+If they can trace it back to a source without asking you anything, the trail exists. If they cannot, it does not — regardless of how well you understand it yourself.

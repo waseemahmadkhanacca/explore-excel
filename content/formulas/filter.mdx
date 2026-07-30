@@ -1,0 +1,96 @@
+---
+slug: filter
+name: FILTER
+category: Dynamic array
+summary: Return rows that meet a condition
+description: FILTER returns every row matching a condition, spilling the results into the cells below. It replaces the advanced filter, most helper columns, and a great deal of copying and pasting.
+versions: [Excel 365, Excel 2021]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/kpi-dashboard.xlsx
+related: [UNIQUE, SORT, COUNTIFS, IFERROR]
+syntax: '=FILTER(array, include, [if_empty])'
+arguments:
+  - name: array
+    required: true
+    description: The range to return rows from.
+  - name: include
+    required: true
+    description: A condition producing TRUE or FALSE for each row, such as B2:B7="North". Must be the same height as the array.
+  - name: if_empty
+    required: false
+    description: What to return when nothing matches. Without it you get #CALC!.
+demo:
+  file: Q3 regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Order, Region, Status, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['#1041', 'North', 'Closed', 12400]
+    - ['#1042', 'South', 'Open', 8100]
+    - ['#1043', 'North', 'Open', 9600]
+    - ['#1044', 'North', 'Closed', 15250]
+    - ['#1045', 'East', 'Closed', 7300]
+    - ['#1046', 'North', 'Closed', 4880]
+  presets:
+    - label: Count what matches
+      formula: '=COUNTIFS(B2:B7, "North")'
+    - label: Total the matches
+      formula: '=SUMIFS(D2:D7, B2:B7, "North")'
+    - label: Two conditions
+      formula: '=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")'
+    - label: Largest match
+      formula: '=MAXIFS(D2:D7, B2:B7, "North")'
+mistakes:
+  - level: error
+    title: Not available before Excel 2021
+    body: FILTER returns #NAME? in Excel 2019 and earlier. It is a dynamic array function and there is no fallback that behaves the same way. For files that leave your organisation, this is the deciding factor.
+  - level: error
+    title: The spill range is blocked
+    body: FILTER needs empty cells below and to the right to place its results. Anything in the way gives #SPILL!. Clear the space rather than trying to make the formula smaller.
+  - level: warning
+    title: Nothing matches and no if_empty is set
+    body: With no third argument, a filter matching nothing returns #CALC!. Always supply if_empty — an empty string or a short message — so a legitimate empty result does not look like a broken formula.
+  - level: warning
+    title: The condition must be the same height as the array
+    body: Filtering A2:D7 with a condition built on B2:B8 gives #VALUE!. The condition produces one TRUE or FALSE per row and there has to be exactly one per row of the array.
+faq:
+  - q: Why does the demo above use SUMIFS rather than FILTER?
+    a: This interactive grid evaluates one formula into one cell. FILTER produces a spilled range of many cells, which the grid cannot show. The presets demonstrate the equivalent aggregate answers. Try FILTER itself in Excel.
+  - q: How do I filter on two conditions?
+    a: Multiply them. FILTER(A2:D7,(B2:B7="North")*(C2:C7="Closed")) is AND. Add them with a plus sign for OR. Multiplication converts TRUE and FALSE to 1 and 0.
+  - q: Can FILTER return only some columns?
+    a: Yes, if you point the array at just those columns. To pick non-adjacent columns you would wrap it in CHOOSECOLS, or run two FILTER formulas side by side.
+  - q: What is the difference between FILTER and an AutoFilter?
+    a: AutoFilter hides rows in place and is a manual action. FILTER produces a new live range that updates automatically as the source data changes. For anything feeding a report, FILTER is the better tool.
+  - q: What can I use in Excel 2019?
+    a: There is no clean equivalent. AutoFilter for manual work, a PivotTable for summaries, or SUMIFS and COUNTIFS when you only need aggregates rather than the rows themselves.
+---
+
+## Examples
+
+### 1. Filtering one column
+
+<Formula>=SUMIFS(D2:D7, B2:B7, "North")</Formula>
+
+The interactive grid above shows aggregates because it evaluates a single formula into a single cell. In Excel, `=FILTER(A2:D7, B2:B7="North")` would return the four matching rows in full, spilling down from wherever you type it.
+
+### 2. Two conditions
+
+<Formula>=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")</Formula>
+
+The FILTER equivalent multiplies the conditions: `=FILTER(A2:D7, (B2:B7="North")*(C2:C7="Closed"))`. Multiplication is AND because TRUE times TRUE is 1 and anything times FALSE is 0.
+
+<Callout type="tip" title="AND and OR in dynamic arrays">
+Multiply for AND, add for OR. `(B2:B7="North")+(B2:B7="South")` returns rows from either region. It looks strange the first time — you are doing arithmetic on logic — but it is the standard idiom and worth recognising.
+</Callout>
+
+### 3. Handling an empty result
+
+Always give FILTER a third argument:
+
+`=FILTER(A2:D7, B2:B7="West", "No orders")`
+
+Without it, a filter that matches nothing returns `#CALC!`, which looks like a mistake rather than a legitimate answer of "none".

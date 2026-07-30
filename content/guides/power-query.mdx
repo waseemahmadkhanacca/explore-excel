@@ -1,0 +1,85 @@
+---
+slug: power-query
+title: Power Query, or how to clean data once
+level: Advanced
+summary: The single biggest time saver for anyone who receives the same messy file every month.
+description: What Power Query does, why it beats both manual cleaning and macros, and the workflow that turns a two-hour monthly job into one click.
+updated: 2026-07-23
+readingTime: 9
+related: [TRIM, SUBSTITUTE, LEFT, UNIQUE]
+---
+
+If you receive the same badly formatted export every month and clean it by hand every month, this is the article that gets those hours back.
+
+Power Query records your cleaning steps and replays them. Next month, you point it at the new file and press Refresh.
+
+It is built into Excel from 2016 onwards, under Data, then Get Data. No installation, no licence, no VBA.
+
+## What problem it actually solves
+
+Manual cleaning has three failures:
+
+- It takes the same time every month
+- The steps live in your head, so nobody else can do it
+- A step forgotten under time pressure produces a report that is wrong in a way nobody can see
+
+Macros solve the first two and introduce their own problems: they break when Excel updates, they need a macro-enabled file that many organisations block by email, and almost nobody can read someone else's VBA.
+
+Power Query solves all three and has none of those drawbacks. Its steps are listed in plain language down the right-hand side, so a colleague can read what you did without knowing any code.
+
+## The workflow
+
+**Load.** Data, then Get Data, then From File. Pick the messy export. You get a preview window, not a sheet full of data.
+
+**Clean.** Each action you take is recorded as a step:
+
+- Remove the top four rows of company letterhead
+- Promote the next row to headers
+- Change a column's type from text to number
+- Split a combined field on its delimiter
+- Filter out the subtotal rows
+- Trim whitespace from every text column
+
+**Load to the sheet.** Close and Load. The cleaned table appears, with the query attached.
+
+**Next month.** Save the new export over the old one, right-click the table, Refresh. Every step replays in order.
+
+## The steps that earn their keep
+
+**Remove Top Rows.** Exports from accounting systems begin with a title block. This removes it without you scrolling.
+
+**Use First Row as Headers.** After removing the letterhead, the real headers become row one. One click promotes them.
+
+**Change Type.** Power Query enforces types properly. A column declared as a number that contains "n/a" produces a visible error rather than silently failing to sum later.
+
+**Split Column by Delimiter.** The counterpart to `LEFT` and `MID`, done once rather than in a formula per row.
+
+**Unpivot Columns.** This one deserves special mention. Reports frequently arrive with months across the top — a shape that is readable for humans and useless for analysis. Select the month columns, right-click, Unpivot. You get one row per month per record, which is the shape PivotTables and `SUMIFS` need.
+
+Doing that by hand for a year of data is a genuinely miserable afternoon. Power Query does it in two clicks and does it identically every month.
+
+**Merge Queries.** A lookup, done at load time. Instead of a column of `XLOOKUP` formulas, the matched values arrive already in the table.
+
+## The habit that makes it worth it
+
+Do not clean data in the sheet.
+
+Every time you find yourself deleting rows, using Find and Replace, or writing a helper column of `TRIM` formulas, ask whether the same thing will arrive next month. If it will, the cleaning belongs in Power Query.
+
+The one-off cost is perhaps twenty minutes more than doing it by hand. The saving is every subsequent month, plus the certainty that the steps happen in the same order every time.
+
+## Where it does not fit
+
+**One-off analysis.** For a file you will never see again, cleaning by hand is faster.
+
+**Very large data.** Power Query is not fast on millions of rows. That is a database problem, not a spreadsheet one.
+
+**Live data.** Refresh is manual, or scheduled at best. Nothing here is real-time.
+
+## The honest caveat
+
+Power Query has a real learning curve, mostly because its interface does not look like Excel and its vocabulary is different. The first query you build will take longer than cleaning the file by hand, and it will feel like a poor trade.
+
+The second one takes ten minutes. The third takes two.
+
+If you receive a recurring export, that curve pays for itself within about three months and then keeps paying indefinitely. If you do not, you can safely ignore this entire article.

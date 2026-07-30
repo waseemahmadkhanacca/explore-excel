@@ -1,0 +1,95 @@
+---
+slug: networkdays
+name: NETWORKDAYS
+category: Date
+summary: Count working days between dates
+description: NETWORKDAYS counts the working days between two dates, excluding weekends and any holidays you supply. It is the right way to measure turnaround time, because calendar days flatter or penalise depending on which day of the week something landed.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/timesheet.xlsx
+related: [DATEDIF, EOMONTH, DATE, IF]
+syntax: '=NETWORKDAYS(start_date, end_date, [holidays])'
+arguments:
+  - name: start_date
+    required: true
+    description: The first day. It is included in the count if it is a working day.
+  - name: end_date
+    required: true
+    description: The last day. Also included if it is a working day.
+  - name: holidays
+    required: false
+    description: A range of dates to exclude as well as weekends. Usually a list on another sheet.
+demo:
+  file: Job turnaround.xlsx
+  columns: [A, B, C, D]
+  headers: [Job, Received, Completed, Value]
+  editable: [3]
+  money: [3]
+  dates: [1, 2]
+  rows:
+    - ['JOB-401', 46037, 46041, 2400]
+    - ['JOB-402', 46038, 46045, 5100]
+    - ['JOB-403', 46042, 46042, 900]
+    - ['JOB-404', 46044, 46058, 12750]
+    - ['JOB-405', 46050, 46064, 3300]
+    - ['JOB-406', 46052, 46053, 1850]
+  presets:
+    - label: Working days
+      formula: '=NETWORKDAYS(B2, C2)'
+    - label: Across a weekend
+      formula: '=NETWORKDAYS(B3, C3)'
+    - label: Same day
+      formula: '=NETWORKDAYS(B4, C4)'
+    - label: Calendar days for comparison
+      formula: '=C5-B5'
+mistakes:
+  - level: error
+    title: Both ends are included
+    body: NETWORKDAYS counts the start and end dates, so Monday to Monday returns 1, not 0. For elapsed working days after the start, subtract one. Whether the boundary counts is a business question, not a formula question — decide it before writing anything.
+  - level: warning
+    title: Weekends are assumed to be Saturday and Sunday
+    body: NETWORKDAYS hardcodes the Western weekend. In much of the Middle East and parts of South Asia the working week differs. Use NETWORKDAYS.INTL, whose third argument lets you specify which days are weekends.
+  - level: warning
+    title: Forgetting public holidays
+    body: Without the third argument, a national holiday counts as a working day and your turnaround looks better than it was. Keep a holiday list on a separate sheet and reference it consistently.
+  - level: warning
+    title: The result shows as a date
+    body: If the cell was previously formatted as a date, a count of 5 displays as a date in January 1900. Set the cell to General or Number. The formula is right; the format is not.
+faq:
+  - q: Does NETWORKDAYS include the start and end dates?
+    a: Yes, both, when they are working days. Monday to Friday returns 5. If you want days elapsed rather than days worked, subtract one.
+  - q: How do I handle a different working week?
+    a: Use NETWORKDAYS.INTL. Its third argument selects the weekend pattern — 7 for Friday and Saturday, for example — or takes a seven-character string of ones and zeros for full control.
+  - q: How do I add working days rather than count them?
+    a: WORKDAY does the reverse. =WORKDAY(A2,10,holidays) returns the date ten working days after A2, which is how service-level deadlines are calculated.
+  - q: Where should the holiday list live?
+    a: On its own sheet, as a single column of dates, referenced absolutely so it does not shift when the formula is copied. Keeping it in one place means one edit a year rather than many.
+  - q: Why does my result look wrong by one?
+    a: Almost always the inclusive boundary. Check whether your business counts the day of receipt as day zero or day one, and be consistent about it across every report.
+---
+
+## Examples
+
+### 1. A straightforward turnaround
+
+<Formula>=NETWORKDAYS(B2, C2)</Formula>
+
+Received on a Thursday, completed the following Monday. NETWORKDAYS returns 3 rather than the 4 calendar days, because the weekend does not count.
+
+### 2. Where the difference shows
+
+<Formula>=NETWORKDAYS(B3, C3)</Formula>
+
+A job spanning a full weekend has the same calendar duration as one that does not, but a materially different working duration. This is exactly why turnaround measured in calendar days misleads.
+
+### 3. Same day
+
+<Formula>=NETWORKDAYS(B4, C4)</Formula>
+
+Start and end on the same working day returns 1, because both ends are included. If your definition of same-day turnaround is zero days, subtract one.
+
+<Callout type="warning" title="Check the working week">
+NETWORKDAYS assumes Saturday and Sunday are the weekend. That is wrong in much of the Middle East and in parts of South Asia, where Friday is the common rest day. NETWORKDAYS.INTL takes a weekend code as its third argument and should be the default for anything crossing regions.
+</Callout>

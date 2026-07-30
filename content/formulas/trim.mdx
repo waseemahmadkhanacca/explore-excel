@@ -1,0 +1,88 @@
+---
+slug: trim
+name: TRIM
+category: Text
+summary: Strip extra spaces
+description: TRIM removes leading and trailing spaces and reduces runs of spaces inside text to one. It is the first thing to try when a lookup fails on data that looks perfectly correct.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 4
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/kpi-dashboard.xlsx
+related: [SUBSTITUTE, LEN, XLOOKUP, IFERROR]
+syntax: '=TRIM(text)'
+arguments:
+  - name: text
+    required: true
+    description: The text to clean. A cell reference, or text in quotes.
+demo:
+  file: Imported customers.xlsx
+  columns: [A, B, C, D]
+  headers: [Customer, Region, Contact, Value]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['  Northgate Ltd', 'North', 'A Khan', 24500]
+    - ['Bridgeway  ', 'South', 'J Brown', 18750]
+    - ['Castleton   Group', 'North', 'M Chen', 32100]
+    - ['Dunmore', 'East', 'S Diaz', 9400]
+    - ['  Eastvale  ', 'West', 'O Farid', 15600]
+    - ['Fairholm', 'North', 'N Petrov', 21300]
+  presets:
+    - label: Leading spaces
+      formula: '=TRIM(A2)'
+    - label: Trailing spaces
+      formula: '=TRIM(A3)'
+    - label: Spaces in the middle
+      formula: '=TRIM(A4)'
+    - label: Length before and after
+      formula: '=LEN(A6)-LEN(TRIM(A6))'
+mistakes:
+  - level: error
+    title: It does not remove every kind of space
+    body: TRIM only handles the ordinary space, character 32. Text copied from a web page often contains a non-breaking space, character 160, which TRIM ignores completely. Use SUBSTITUTE(A2,CHAR(160),"") first, then TRIM.
+  - level: warning
+    title: Trimming does not change the original
+    body: TRIM returns a cleaned copy in a new cell. The source is untouched. To clean data in place, copy the trimmed column and paste as values over the original.
+  - level: warning
+    title: It also collapses internal spaces
+    body: Two spaces between words become one. That is usually desirable but not always — in a fixed-width identifier or a code with deliberate spacing, TRIM changes the value.
+  - level: warning
+    title: Numbers stored as text stay text
+    body: TRIM cleans the spaces but the result is still text. If you trimmed a number to make it match, wrap it in VALUE as well, otherwise the lookup still fails.
+faq:
+  - q: Why does my lookup fail on data that looks identical?
+    a: Almost always a trailing space. It is invisible on screen and makes two apparently identical values different. Compare =LEN(A2) against =LEN(TRIM(A2)) — if they differ, that is your answer.
+  - q: How do I remove non-breaking spaces?
+    a: Use =TRIM(SUBSTITUTE(A2,CHAR(160)," ")). The SUBSTITUTE converts them to ordinary spaces first, then TRIM removes them. This combination handles almost all pasted-from-the-web text.
+  - q: Can TRIM clean a whole column at once?
+    a: Write it in a helper column, fill down, then copy and paste as values over the original. Power Query is better for anything you have to repeat every month.
+  - q: Does TRIM remove line breaks?
+    a: No. Line breaks are character 10, not spaces. Use =CLEAN(A2) for those, or SUBSTITUTE with CHAR(10).
+  - q: Should I trim data on the way in?
+    a: Yes, if you receive the same export regularly. Cleaning at the point of import means every downstream formula can assume clean data, which is far less fragile than trimming defensively everywhere.
+---
+
+## Examples
+
+### 1. Leading and trailing spaces
+
+<Formula>=TRIM(A2)</Formula>
+
+The customer name has two leading spaces that are impossible to see. TRIM removes them and returns the clean name.
+
+### 2. Runs of spaces inside the text
+
+<Formula>=TRIM(A4)</Formula>
+
+Castleton has three spaces between the words. TRIM reduces them to one, which is usually what you want — though be careful with codes where spacing is meaningful.
+
+### 3. Proving there is a problem
+
+<Formula>=LEN(A6)-LEN(TRIM(A6))</Formula>
+
+This is the diagnostic worth knowing. It returns how many characters TRIM would remove. A non-zero answer explains a failing lookup in one step, without you having to see anything.
+
+<Callout type="warning" title="The space TRIM cannot see">
+Data pasted from a web page frequently contains character 160, a non-breaking space. It looks exactly like a normal space and TRIM ignores it entirely. When TRIM appears to do nothing on obviously spaced text, this is why. Use =TRIM(SUBSTITUTE(A2,CHAR(160)," ")) instead.
+</Callout>

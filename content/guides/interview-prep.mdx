@@ -1,0 +1,86 @@
+---
+slug: interview-prep
+title: Excel questions employers actually ask
+level: All levels
+summary: The questions that come up in finance, audit and analyst interviews, with answers that show judgement rather than recall.
+description: Real Excel interview questions for finance and analyst roles, what the interviewer is testing, and how to answer in a way that demonstrates you have used a spreadsheet in anger.
+updated: 2026-07-23
+readingTime: 10
+related: [XLOOKUP, SUMIFS, INDEX, IFERROR]
+---
+
+Excel questions in an interview are rarely testing whether you know a function. They are testing whether you have used a spreadsheet somebody else depended on.
+
+The difference shows in the answers. Someone who has only studied Excel names the function. Someone who has used it mentions what goes wrong.
+
+## "What is the difference between VLOOKUP and XLOOKUP?"
+
+The most common opening question in finance interviews.
+
+**A weak answer:** XLOOKUP is newer and better.
+
+**A strong answer:** XLOOKUP looks in both directions, defaults to an exact match, and has a built-in not-found value. More importantly, it does not break when someone inserts a column, because it references ranges rather than counting column positions. The reason to still use VLOOKUP or INDEX/MATCH is compatibility — XLOOKUP returns `#NAME?` in Excel 2019 and earlier, so anything going to clients or auditors needs the older approach.
+
+That last sentence is what separates the answers. It shows you have thought about who opens the file.
+
+## "How would you find why a SUMIFS returns zero?"
+
+They are testing debugging, not knowledge.
+
+**The answer:** run `COUNTIFS` with identical criteria first. If the count is also zero, the criteria never match and the problem is in the data or the conditions — most often a trailing space, or numbers stored as text. If the count is right but the sum is zero, the problem is the sum range.
+
+Adding that you would check `ISNUMBER` on a sample cell, and `LEN` against `LEN(TRIM())` to detect stray whitespace, demonstrates you have actually hit this.
+
+## "How do you handle errors in a model?"
+
+A judgement question dressed as a technical one.
+
+**A weak answer:** wrap everything in IFERROR.
+
+**A strong answer:** it depends what the error means. An expected not-found case deserves `IFNA` with a readable message. A `#REF!` or `#DIV/0!` in a model is information — wrapping it hides a structural problem and produces a confident wrong number, which is worse than a visible failure. In a financial model I would keep errors visible on the calculation spine and only tidy the presentation layer.
+
+Interviewers in audit and finance react well to this, because they have all seen a model that returned zero instead of erroring.
+
+## "Walk me through building a report from a monthly export"
+
+They want your process, not your formulas.
+
+A good answer has shape: keep the raw export untouched on its own sheet; clean it into a working table, using Power Query if the export recurs; build the aggregation with `SUMIFS` on a separate sheet; put the presentation on a third. Charts and reports read from the aggregation, never from the raw data.
+
+Then mention the reason: so that when next month's export has an extra column, one layer changes rather than the whole workbook.
+
+## "What is wrong with merged cells?"
+
+A quick test of whether you have been burned.
+
+They break sorting, break filtering, break `Ctrl` plus arrow navigation, break PivotTables, and make ranges behave unpredictably in formulas. Centre Across Selection gives the same appearance with none of the damage. It sits in the Format Cells dialogue under Horizontal alignment.
+
+## "How would you check somebody else's workbook?"
+
+An audit-flavoured question, and a good chance to show rigour.
+
+Reasonable answers include: use Formulas, then Show Formulas, to see the logic rather than the results; use Trace Precedents on any figure that matters; look for hardcoded numbers inside formulas, which are the commonest source of silent error; check that totals actually sum the range they appear to; and recalculate with `Ctrl` `Alt` `Shift` `F9` to force a full rebuild in case something is stale.
+
+Mentioning that you would check for values pasted over formulas is a strong detail. It happens constantly and it is invisible until you look.
+
+## "What is a PivotTable's biggest weakness?"
+
+That it does not refresh automatically. It holds a cached copy of the data and shows old numbers with no warning until someone refreshes it. Anything going to other people should either be refreshed as a deliberate step or built with formulas that recalculate on open.
+
+## The practical test
+
+Many finance interviews now include a short exercise. Common tasks: build a summary by category from a transaction list, reconcile two lists and identify the differences, or clean a badly formatted export.
+
+Three things matter more than speed:
+
+**Talk while you work.** Explaining that you are checking for text-formatted numbers before writing the lookup tells them more than getting there silently.
+
+**Keep the raw data intact.** Working on a copy shows instinct they cannot teach.
+
+**Say what you would do differently with more time.** "I would put this in Power Query if it were a recurring export" turns a five-minute exercise into evidence of judgement.
+
+## What not to do
+
+Do not claim to be an Excel expert. It is an invitation to be tested, and the bar is higher than most people think. "I use it daily for reconciliations and reporting, and I am comfortable with lookups, SUMIFS and PivotTables" is more credible and easier to defend.
+
+Do not name-drop functions you have not used. Mentioning array formulas or LAMBDA to sound advanced goes badly when the follow-up question arrives.

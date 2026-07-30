@@ -1,0 +1,92 @@
+---
+slug: eomonth
+name: EOMONTH
+category: Date
+summary: Find the end of a month
+description: EOMONTH returns the last day of a month, either the one containing a date you give it or a number of months either side. It is the reliable way to build period ends without worrying about 30 days, 31 days or February.
+versions: [Excel 2007 and later]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/cash-flow-forecast.xlsx
+related: [DATEDIF, NETWORKDAYS, DATE, IF]
+syntax: '=EOMONTH(start_date, months)'
+arguments:
+  - name: start_date
+    required: true
+    description: Any date in the month you are counting from.
+  - name: months
+    required: true
+    description: How many months forward or back. Zero gives the end of the current month, 1 the next, -1 the previous.
+demo:
+  file: Invoice dates.xlsx
+  columns: [A, B, C, D]
+  headers: [Invoice, Invoice date, Terms (days), Amount]
+  editable: [3]
+  money: [3]
+  dates: [1]
+  rows:
+    - ['INV-201', 46037, 30, 4850]
+    - ['INV-202', 46050, 45, 12300]
+    - ['INV-203', 46067, 30, 2975]
+    - ['INV-204', 46083, 60, 18400]
+    - ['INV-205', 46100, 30, 6220]
+    - ['INV-206', 46119, 14, 3140]
+  presets:
+    - label: End of this month
+      formula: '=EOMONTH(B2, 0)'
+    - label: End of next month
+      formula: '=EOMONTH(B2, 1)'
+    - label: End of last month
+      formula: '=EOMONTH(B2, -1)'
+    - label: Quarter end
+      formula: '=EOMONTH(B2, 2)'
+mistakes:
+  - level: error
+    title: The result shows as a number
+    body: EOMONTH returns a date serial, so an unformatted cell displays something like 46053. The formula is correct; the cell needs a date format. This confuses people more than any other aspect of the function.
+  - level: warning
+    title: Confusing EOMONTH with EDATE
+    body: EDATE keeps the same day of the month. EOMONTH always lands on the last day. For a payment due on the 15th, EDATE is right. For a period end, EOMONTH is right.
+  - level: warning
+    title: Assuming month end means payment due
+    body: EOMONTH plus a number of days gives an end-of-month-plus-terms date, but many organisations pay on a fixed day rather than a rolling one. Check the actual terms before building the logic.
+  - level: warning
+    title: Passing text instead of a date
+    body: A date written as the text 2026-01-15 may work or may give #VALUE!, depending on regional settings. Use DATE(2026,1,15) or a real date cell so the behaviour is the same everywhere.
+faq:
+  - q: How do I get the first day of a month?
+    a: Take the end of the previous month and add one — =EOMONTH(A2,-1)+1. There is no FIRSTOFMONTH function, and this idiom is the standard workaround.
+  - q: Does EOMONTH handle leap years?
+    a: Yes. EOMONTH on any February date in 2028 returns the 29th. Doing this arithmetic by hand is exactly where errors creep in.
+  - q: How do I find a quarter end?
+    a: If your quarters follow the calendar, EOMONTH with 2, 5, 8 or 11 gets you there from a January date. For an arbitrary date, combining MONTH and ROUNDUP is more robust.
+  - q: Why does my result show as a number?
+    a: Date serials are how Excel stores dates internally. Format the cell as a date and it will display correctly. Nothing is wrong with the formula.
+  - q: Can I use a negative number of months?
+    a: Yes. -1 gives the previous month end, -12 the same month a year earlier. This is how prior-period comparatives are built.
+---
+
+## Examples
+
+### 1. The end of the current month
+
+<Formula>=EOMONTH(B2, 0)</Formula>
+
+Zero means the month containing the date. Whatever the invoice date, this returns the last day of that month — no need to know how many days it has.
+
+### 2. Moving forward and back
+
+<Formula>=EOMONTH(B2, 1)</Formula>
+
+One gives next month's end, minus one gives last month's. This is how rolling period ends are generated for a forecast, and it handles year boundaries without any extra logic.
+
+### 3. Quarter ends
+
+<Formula>=EOMONTH(B2, 2)</Formula>
+
+From a January date, two months on lands on 31 March. For calendar quarters this is the simplest approach available.
+
+<Callout type="tip" title="First of the month">
+There is no FIRSTOFMONTH function. The idiom everyone uses is =EOMONTH(A2,-1)+1 — the end of last month, plus a day. It looks odd the first time and then becomes second nature.
+</Callout>

@@ -1,0 +1,107 @@
+---
+slug: xlookup
+name: XLOOKUP
+category: Lookup
+summary: Find a value in any direction
+description: XLOOKUP searches a range for a value and returns a matching result from another range. It replaces VLOOKUP, HLOOKUP and INDEX/MATCH with one function that looks in any direction and doesn't break when you insert a column.
+versions: [Excel 365, Excel 2021]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/xlookup-practice.xlsx
+related: [VLOOKUP, INDEX, MATCH, FILTER]
+syntax: '=XLOOKUP(lookup_value, lookup_array, return_array, [if_not_found], [match_mode], [search_mode])'
+arguments:
+  - name: lookup_value
+    required: true
+    description: The value to search for.
+  - name: lookup_array
+    required: true
+    description: The range to search in. A single column or row.
+  - name: return_array
+    required: true
+    description: The range to return from. Must be the same size as lookup_array.
+  - name: if_not_found
+    required: false
+    description: What to return when nothing matches. Without it you get #N/A.
+  - name: match_mode
+    required: false
+    description: 0 exact (default) · -1 exact or next smaller · 1 exact or next larger · 2 wildcard.
+  - name: search_mode
+    required: false
+    description: 1 first to last (default) · -1 last to first · 2 or -2 binary search on sorted data.
+demo:
+  file: Product lookup.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Product, Price, Stock]
+  editable: [2, 3]
+  money: [2]
+  rows:
+    - ['SKU-101', 'Widget', 24.50, 140]
+    - ['SKU-108', 'Bracket', 8.75, 62]
+    - ['SKU-114', 'Cable', 15.20, 25]
+    - ['SKU-122', 'Housing', 47.00, 8]
+    - ['SKU-130', 'Sensor', 112.40, 31]
+    - ['SKU-145', 'Adapter', 19.90, 54]
+  presets:
+    - label: Basic lookup
+      formula: '=XLOOKUP("SKU-114", A2:A7, C2:C7)'
+    - label: With if_not_found
+      formula: '=XLOOKUP("SKU-999", A2:A7, C2:C7, "Not found")'
+    - label: Approximate match
+      formula: '=XLOOKUP(28, D2:D7, A2:A7, "None", -1)'
+    - label: Look up by name
+      formula: '=XLOOKUP("Cable", B2:B7, C2:C7)'
+mistakes:
+  - level: error
+    title: lookup_array and return_array are different sizes
+    body: This returns #VALUE!. If your lookup array is A2:A7, the return array must also be six rows — C2:C7, not C2:C8. It is the single most common XLOOKUP error.
+  - level: error
+    title: The lookup value is text but the data is numbers
+    body: '"114" will never match 114. Numbers imported from another system are often stored as text. Check for the green triangle in the corner of the cell, or test with =ISNUMBER(A2).'
+  - level: warning
+    title: Trailing spaces
+    body: '"North " and "North" are different values. Exported data frequently carries trailing spaces. Wrap the lookup value in TRIM() if you are not sure.'
+  - level: warning
+    title: Sharing with people on older Excel
+    body: XLOOKUP needs Excel 365 or Excel 2021. Open the file in Excel 2019 or earlier and every XLOOKUP becomes #NAME?. If the file goes to clients or auditors on older versions, use INDEX/MATCH instead.
+faq:
+  - q: Is XLOOKUP better than VLOOKUP?
+    a: For most work, yes. It looks left as well as right, defaults to an exact match, has a built-in not-found value, and does not break when columns are inserted. The one reason to keep using VLOOKUP is compatibility — XLOOKUP needs Excel 365 or 2021.
+  - q: Why does my XLOOKUP return #N/A?
+    a: Nothing matched. The usual causes are a trailing space in the data, numbers stored as text, or a spelling difference. Add a fourth argument to return a readable message instead, and check the data with TRIM and ISNUMBER.
+  - q: Can XLOOKUP return more than one column?
+    a: Yes. Make return_array span several columns, for example C2:E7, and it spills the whole matching row. This is one thing VLOOKUP cannot do without repeating the formula.
+  - q: Does XLOOKUP work in Excel 2019?
+    a: No. It was introduced in Excel 365 and is also in Excel 2021. In Excel 2019 and earlier it returns #NAME?. Use INDEX and MATCH if the file will be opened on older versions.
+  - q: Is XLOOKUP slower than VLOOKUP?
+    a: On normal-sized data the difference is not noticeable. On very large sorted datasets, setting search_mode to 2 uses a binary search and is considerably faster than either.
+---
+
+## Examples
+
+### 1. Find a price from a product code
+
+The most common use. Search the SKU column, return the matching price.
+
+<Formula>=XLOOKUP("SKU-114", A2:A7, C2:C7)</Formula>
+
+Unlike VLOOKUP, the return column doesn't have to be to the right of the lookup column, and there's no column index number to break when someone inserts a column.
+
+### 2. Return something useful when there's no match
+
+The fourth argument replaces the whole IFERROR wrapper you used to need.
+
+<Formula>=XLOOKUP("SKU-999", A2:A7, C2:C7, "Not in catalogue")</Formula>
+
+<Callout type="tip" title="Worth knowing">
+With VLOOKUP you'd write `=IFERROR(VLOOKUP(...), "Not found")`, which also swallows genuine errors like #REF!. XLOOKUP only catches the not-found case, so real problems still surface.
+</Callout>
+
+### 3. Find the closest match below a value
+
+Set match_mode to -1 for tiered pricing, tax bands, or commission thresholds.
+
+<Formula>=XLOOKUP(28, D2:D7, A2:A7, "None", -1)</Formula>
+
+This finds the largest stock value that is 28 or less, and returns its SKU. Useful whenever you need a band rather than an exact hit.

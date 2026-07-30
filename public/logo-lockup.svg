@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64" role="img" aria-label="Explore Excel — Explore. Learn. Automate.">
+  <rect x="0" y="2" width="60" height="60" rx="12" fill="#0F6E56"/>
+  <rect x="14" y="34" width="8.5" height="14" rx="2" fill="#5DCAA5"/>
+  <rect x="25.8" y="25.5" width="8.5" height="22.5" rx="2" fill="#5DCAA5"/>
+  <rect x="37.5" y="17" width="8.5" height="31" rx="2" fill="#FFFFFF"/>
+  <text x="74" y="34" font-family="Inter Tight, Inter, system-ui, sans-serif" font-size="24" font-weight="400" fill="#141414">Explore</text>
+  <text x="167" y="34" font-family="Inter Tight, Inter, system-ui, sans-serif" font-size="24" font-weight="600" fill="#0F6E56">Excel</text>
+  <text x="75" y="50" font-family="Inter, system-ui, sans-serif" font-size="9" font-weight="400" fill="#6B6B6B" letter-spacing="2.95">EXPLORE. LEARN. AUTOMATE.</text>
+</svg>

@@ -1,0 +1,103 @@
+---
+slug: vlookup
+name: VLOOKUP
+category: Lookup
+summary: Look up a value in the first column
+description: VLOOKUP searches the first column of a range for a value and returns something from a column to its right. It is the most widely known Excel function and, in modern Excel, the one you should usually replace with XLOOKUP or INDEX/MATCH.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 7
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [XLOOKUP, INDEX, MATCH, IFERROR]
+syntax: '=VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])'
+arguments:
+  - name: lookup_value
+    required: true
+    description: The value to search for. It must be in the first column of table_array.
+  - name: table_array
+    required: true
+    description: The whole block of data, starting with the column being searched.
+  - name: col_index_num
+    required: true
+    description: Which column of that block to return, counted from the left. Column 1 is the lookup column itself.
+  - name: range_lookup
+    required: false
+    description: FALSE for an exact match. TRUE or omitted gives an approximate match and requires sorted data. Always write FALSE unless you specifically want banding.
+demo:
+  file: Product catalogue.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Product, Price, Stock]
+  editable: [2, 3]
+  money: [2]
+  rows:
+    - ['SKU-101', 'Widget', 24.50, 140]
+    - ['SKU-108', 'Bracket', 8.75, 62]
+    - ['SKU-114', 'Cable', 15.20, 25]
+    - ['SKU-122', 'Housing', 47.00, 8]
+    - ['SKU-130', 'Sensor', 112.40, 31]
+    - ['SKU-145', 'Adapter', 19.90, 54]
+  presets:
+    - label: Return the price
+      formula: '=VLOOKUP("SKU-114", A2:D7, 3, FALSE)'
+    - label: Return the stock
+      formula: '=VLOOKUP("SKU-114", A2:D7, 4, FALSE)'
+    - label: Missing value
+      formula: '=VLOOKUP("SKU-999", A2:D7, 3, FALSE)'
+    - label: Wrapped in IFERROR
+      formula: '=IFERROR(VLOOKUP("SKU-999", A2:D7, 3, FALSE), "Not in catalogue")'
+mistakes:
+  - level: error
+    title: Forgetting FALSE on the last argument
+    body: Leave range_lookup off and Excel does an approximate match on unsorted data. It does not error. It returns a plausible but wrong value, which is far more dangerous than a visible failure. Write FALSE every time.
+  - level: error
+    title: The column index breaks when someone inserts a column
+    body: VLOOKUP counts columns by position, not by name. Insert a column inside the table and every formula pointing past it now returns the wrong field, silently. This single weakness is the main reason XLOOKUP exists.
+  - level: error
+    title: The lookup value is not in the first column
+    body: VLOOKUP can only search the leftmost column of the range you give it. To look left, you need INDEX and MATCH, or XLOOKUP. There is no argument that changes this.
+  - level: warning
+    title: Numbers stored as text
+    body: A SKU typed as 114 and one stored as text "114" are different values and will not match, giving #N/A on data that looks correct. Test a cell with =ISNUMBER(A2). If it returns FALSE on something that should be a number, that is your problem.
+faq:
+  - q: Should I still use VLOOKUP?
+    a: If your file might be opened in Excel 2019 or earlier, yes — XLOOKUP does not exist there and returns #NAME?. For files staying on Excel 365 or 2021, XLOOKUP is better in every respect. INDEX/MATCH is the compatible alternative that avoids VLOOKUP's weaknesses.
+  - q: Why does VLOOKUP return #N/A?
+    a: Nothing matched. The usual causes are a trailing space, numbers stored as text, a spelling difference, or a lookup value that is not in the first column of the range. Wrap it in IFERROR only after you have checked which of these it is.
+  - q: How do I make VLOOKUP look to the left?
+    a: You cannot. Use =INDEX(return_range, MATCH(lookup_value, lookup_range, 0)) instead, which works in any direction and in every version of Excel.
+  - q: What does the TRUE option actually do?
+    a: It finds the largest value less than or equal to what you searched for, which is useful for tax bands and commission tiers. It requires the first column to be sorted ascending. On unsorted data it returns nonsense without warning.
+  - q: Can VLOOKUP return more than one column?
+    a: Not on its own. You would write a separate VLOOKUP for each column, which is slow on large files because each one searches independently. XLOOKUP can return a whole row at once.
+---
+
+## Examples
+
+### 1. Look up a price from a product code
+
+The standard use. Search the SKU column, return column 3.
+
+<Formula>=VLOOKUP("SKU-114", A2:D7, 3, FALSE)</Formula>
+
+The range starts at column A because that is where the SKUs are. Column 3 counts from A, so it returns Price. Change the 3 to a 4 and you get Stock.
+
+### 2. Handling a value that is not there
+
+On its own, a missing value gives #N/A, which looks broken in a report.
+
+<Formula>=IFERROR(VLOOKUP("SKU-999", A2:D7, 3, FALSE), "Not in catalogue")</Formula>
+
+<Callout type="warning" title="Use IFERROR carefully">
+IFERROR hides every error, not just #N/A. A #REF! caused by a deleted column would also be swallowed, so a genuinely broken formula would look like a missing value. IFNA catches only the not-found case, which is usually what you actually want.
+</Callout>
+
+### 3. The approximate match, used deliberately
+
+With TRUE, VLOOKUP finds the largest value at or below your lookup value. This is how commission bands and tax tables are built — but the column being searched must be numeric and sorted ascending.
+
+The catalogue above is sorted by SKU, which is text, so an approximate match on column A would be meaningless. In a real banding table the first column would hold the lower bound of each band:
+
+<Formula>=VLOOKUP(15.20, C2:C7, 1, FALSE)</Formula>
+
+Two conditions have to hold for TRUE to be safe: the first column is numeric, and it is sorted ascending. On unsorted data the result is arbitrary, and Excel will not tell you. This is why FALSE should be your default.

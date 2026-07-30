@@ -1,0 +1,95 @@
+---
+slug: datedif
+name: DATEDIF
+category: Date
+summary: Difference between two dates
+description: DATEDIF returns the gap between two dates in whole years, months or days. It is undocumented in modern Excel and missing from the function list, yet it still works and remains the simplest way to calculate an age or a length of service.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [NETWORKDAYS, EOMONTH, DATE, IFS]
+syntax: '=DATEDIF(start_date, end_date, unit)'
+arguments:
+  - name: start_date
+    required: true
+    description: The earlier date. Must not be later than end_date or you get #NUM!.
+  - name: end_date
+    required: true
+    description: The later date.
+  - name: unit
+    required: true
+    description: In quotes. "Y" for whole years, "M" for whole months, "D" for days. Also "YM", "YD" and "MD" for the remainder parts.
+demo:
+  file: Employee records.xlsx
+  columns: [A, B, C, D]
+  headers: [Employee, Start date, Review date, Salary]
+  editable: [3]
+  money: [3]
+  dates: [1, 2]
+  rows:
+    - ['A Khan', 44634, 46037, 48000]
+    - ['J Brown', 45537, 46037, 41500]
+    - ['M Chen', 43794, 46037, 62000]
+    - ['S Diaz', 45677, 46037, 38000]
+    - ['O Farid', 42527, 46037, 71000]
+    - ['N Petrov', 45887, 46037, 35500]
+  presets:
+    - label: Whole years of service
+      formula: '=DATEDIF(B2, C2, "Y")'
+    - label: In months
+      formula: '=DATEDIF(B2, C2, "M")'
+    - label: In days
+      formula: '=DATEDIF(B7, C7, "D")'
+    - label: Under a year
+      formula: '=DATEDIF(B5, C5, "Y")'
+mistakes:
+  - level: error
+    title: Start date later than end date
+    body: DATEDIF returns #NUM! if the dates are the wrong way round. It does not take an absolute difference. When either date might be missing or mis-entered, guard it with IF before calculating.
+  - level: error
+    title: The unit must be in quotes
+    body: Write "Y" not Y. Without quotes Excel looks for a defined name called Y and returns #NAME?. This catches people out because the rest of the function looks so simple.
+  - level: warning
+    title: Excel gives you no help writing it
+    body: DATEDIF does not appear in the function list and shows no argument tooltip as you type. It still calculates correctly. The absence is a documentation decision by Microsoft, not a sign it is deprecated in behaviour.
+  - level: warning
+    title: Months are whole months, not fractions
+    body: DATEDIF with "M" truncates. From 31 January to 28 February returns 0, because a full month has not elapsed. That is correct for length of service and wrong for anything needing a proportion.
+faq:
+  - q: Why is DATEDIF not in the function list?
+    a: Microsoft has never formally documented it, keeping it for compatibility with Lotus 1-2-3. It works in every version including Excel 365, but you have to type it from memory.
+  - q: How do I calculate an age?
+    a: =DATEDIF(birthdate, TODAY(), "Y") gives whole years, which is how age is normally counted. Dividing days by 365 is close but wrong across leap years.
+  - q: What do YM, YD and MD do?
+    a: They return the remainder after the whole units. "YM" gives the months left over after whole years — the piece you need for "3 years and 7 months".
+  - q: Can I get a decimal number of years?
+    a: Not from DATEDIF, which always truncates. Use =(end-start)/365.25 for an approximation, accepting that it is approximate.
+  - q: Is there a modern replacement?
+    a: Not a single one. YEARFRAC gives a fraction of a year with several day-count conventions, which is better for financial calculations but different from what DATEDIF does.
+---
+
+## Examples
+
+### 1. Length of service in years
+
+<Formula>=DATEDIF(B2, C2, "Y")</Formula>
+
+Whole completed years only. Load the second preset and you will see someone eleven months into the job return 0 — correct for a service calculation, and surprising if you expected rounding.
+
+### 2. The same gap in months
+
+<Formula>=DATEDIF(B2, C2, "M")</Formula>
+
+Also truncated. Useful for probation periods and for anything measured in months rather than years.
+
+### 3. In days
+
+<Formula>=DATEDIF(B7, C7, "D")</Formula>
+
+For days you could simply subtract one date from the other. DATEDIF earns its place on years and months, where subtraction cannot help you.
+
+<Callout type="tip" title="Years and months together">
+The readable form combines two calls: =DATEDIF(B2,C2,"Y")&" years, "&DATEDIF(B2,C2,"YM")&" months". The YM unit returns the leftover months after the whole years, which is exactly the second half of that sentence.
+</Callout>

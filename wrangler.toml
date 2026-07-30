@@ -1,0 +1,14 @@
+name = "explore-excel"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Subscriber storage. Create it with:
+#   npx wrangler d1 create explore-excel-subscribers
+# then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "explore-excel-subscribers"
+database_id = "7818d8a1-99ba-456e-8847-8306c818689d"
+
+[vars]
+NEXT_PUBLIC_SITE_URL = "https://exploreexcel.com"

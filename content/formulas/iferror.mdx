@@ -1,0 +1,91 @@
+---
+slug: iferror
+name: IFERROR
+category: Logical
+summary: Catch an error and return something else
+description: IFERROR runs a formula and returns an alternative if that formula produces an error. It makes reports look clean, and it is the function most likely to hide a real problem while doing so.
+versions: [Excel 2007 and later]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [IF, XLOOKUP, VLOOKUP, INDEX]
+syntax: '=IFERROR(value, value_if_error)'
+arguments:
+  - name: value
+    required: true
+    description: The formula to try. Usually a lookup or a division.
+  - name: value_if_error
+    required: true
+    description: What to return if it errors. Often "" for a blank, a zero, or a readable message.
+demo:
+  file: Sales analysis.xlsx
+  columns: [A, B, C, D]
+  headers: [Rep, Region, Sales, Target]
+  editable: [2, 3]
+  money: [2, 3]
+  rows:
+    - ['Ahmed', 'North', 42000, 40000]
+    - ['Brown', 'South', 31500, 35000]
+    - ['Chen', 'East', 28900, 0]
+    - ['Diaz', 'West', 51200, 45000]
+    - ['Evans', 'North', 19800, 25000]
+    - ['Farid', 'South', 37400, 30000]
+  presets:
+    - label: Catching a lookup
+      formula: '=IFERROR(XLOOKUP("Gray", A2:A7, C2:C7), "Not on the team")'
+    - label: Catching division by zero
+      formula: '=IFERROR(C4/D4, "No target set")'
+    - label: Returning a blank
+      formula: '=IFERROR(XLOOKUP("Gray", A2:A7, C2:C7), "")'
+    - label: Normal result passes through
+      formula: '=IFERROR(C2/D2, "No target set")'
+mistakes:
+  - level: error
+    title: Hiding errors you needed to see
+    body: IFERROR catches every error type, including #REF! from a deleted column and #NAME? from a typo. A genuinely broken formula returns your friendly message and looks fine. This is the single biggest risk with the function and the reason to use it late rather than early.
+  - level: warning
+    title: Wrapping before you have debugged
+    body: Write the formula, get it working, then wrap it. Wrapping first means you never see the error that would have told you what was wrong, and you end up debugging blind.
+  - level: warning
+    title: Returning zero when blank is meant
+    body: Returning 0 for a missing lookup puts a real number into your data. Averages then include it and come out wrong. Use "" when the value is genuinely absent rather than genuinely zero.
+  - level: warning
+    title: Using it to paper over bad data
+    body: If a lookup fails on twenty rows, IFERROR turns twenty visible problems into twenty invisible ones. The report looks better and is less true. Fix the data, then tidy the display.
+faq:
+  - q: What is the difference between IFERROR and IFNA?
+    a: IFNA catches only #N/A, the not-found error. IFERROR catches everything. IFNA is usually the better choice with lookups because it still lets genuine structural errors show.
+  - q: Does IFERROR slow down a large file?
+    a: Slightly, because the inner formula is calculated first and only replaced afterwards. On tens of thousands of rows it is noticeable. It is not a reason to avoid it, just a reason not to nest it deeply.
+  - q: Can I use IFERROR with any formula?
+    a: Yes, anything that might error. Lookups and divisions are the common cases, but it works with dates, text functions and array formulas equally.
+  - q: What errors does it catch?
+    a: All of them — #N/A, #VALUE!, #REF!, #DIV/0!, #NUM!, #NAME? and #NULL!. That completeness is exactly why it can hide problems.
+  - q: Should I use IFERROR in a financial model?
+    a: Sparingly, and never on the calculation spine. A model that silently returns zero instead of erroring will produce a confident wrong answer, which is worse than a visible failure. Errors in a model are information.
+---
+
+## Examples
+
+### 1. A lookup that might not find anything
+
+<Formula>=IFERROR(XLOOKUP("Gray", A2:A7, C2:C7), "Not on the team")</Formula>
+
+Without the wrapper this returns #N/A. With it you get a readable message. Note that XLOOKUP has a built-in fourth argument for exactly this, and that version is better because it only catches the not-found case.
+
+### 2. Division where the denominator can be zero
+
+<Formula>=IFERROR(C4/D4, "No target set")</Formula>
+
+Chen has no target, so the division errors. This is a legitimate use — the error is expected, understood, and the replacement text explains it.
+
+### 3. Returning a blank rather than a message
+
+<Formula>=IFERROR(XLOOKUP("Gray", A2:A7, C2:C7), "")</Formula>
+
+In a wide table, messages are noisier than blanks. The empty string looks like an empty cell but is not one, so ISBLANK returns FALSE and COUNTA still counts it.
+
+<Callout type="warning" title="The habit worth forming">
+Reach for IFNA before IFERROR on lookups. It catches the not-found case and lets everything else surface. When a column gets deleted six months from now, you want a visible #REF! rather than a quiet blank that nobody questions.
+</Callout>

@@ -1,0 +1,87 @@
+---
+slug: pivot-tables
+title: Pivot tables without the mystique
+level: Intermediate
+summary: Summarise thousands of rows without writing a formula, and avoid the two traps that catch everyone.
+description: How PivotTables actually work, when to use one instead of SUMIFS, and the refresh problem that produces confidently wrong reports.
+updated: 2026-07-23
+readingTime: 8
+related: [SUMIFS, COUNTIFS, UNIQUE]
+---
+
+A PivotTable answers one question: how much, broken down by what.
+
+That is the whole idea. Everything else is interface.
+
+## The one prerequisite
+
+Your data must be a clean table. One header row, one record per row, no blank rows in the middle, no merged cells, no subtotals mixed in.
+
+This is not a style preference. A PivotTable reads the header row to name its fields and stops at the first blank row it meets. Break either rule and you get a PivotTable that is missing data without telling you it is missing data.
+
+If you take nothing else from this guide: **the quality of a PivotTable is decided entirely before you create one.**
+
+## Building one
+
+Select any cell in your data, then Insert, then PivotTable. You get four drop zones:
+
+- **Rows** — what you want listed down the side
+- **Columns** — what you want across the top
+- **Values** — what you want counted or added
+- **Filters** — what you want to restrict
+
+Drag Region to Rows and Amount to Values, and you have total sales by region. That is a report that would have taken a `SUMIFS` per region and a list of regions to write.
+
+Add Month to Columns and you have a cross-tabulation. That would have taken a grid of formulas.
+
+## Where PivotTables beat formulas
+
+**Exploration.** You do not know what you are looking for yet. Dragging fields around and watching the summary change is genuinely faster than writing and rewriting formulas.
+
+**Unknown categories.** A `SUMIFS` needs you to know the regions in advance. A PivotTable discovers them. Add a new region to the source data and it appears on refresh.
+
+**Many dimensions at once.** Region by month by product would be a large grid of formulas and is three drags in a PivotTable.
+
+## Where formulas beat PivotTables
+
+**Anything that feeds something else.** A PivotTable's output moves as the data changes, so a formula pointing into it breaks. `SUMIFS` returns a value in a fixed cell that other formulas can rely on.
+
+**Fixed report layouts.** If the report must look a specific way every month, formulas give you exact control. PivotTables have opinions about layout that you will spend time overriding.
+
+**Anything a non-Excel person will open.** A PivotTable that has not been refreshed shows old numbers with no warning. A formula recalculates on open.
+
+## The refresh trap
+
+This is the one that produces genuinely wrong reports.
+
+**A PivotTable does not update when the data changes.** It holds a cached copy from when it was last refreshed. Change the source, and the PivotTable keeps showing the old numbers, confidently, with no indication anything is stale.
+
+Right-click and Refresh, or `Alt` + `F5`, to update it.
+
+I have seen a board pack go out with month-old figures for exactly this reason. The data was updated, the PivotTable was not, and nothing on the page suggested a problem.
+
+**The habit worth forming:** refresh before you look, every time, without thinking about it.
+
+## The range trap
+
+The second trap is subtler. If you create a PivotTable from `A1:D500` and then add rows 501 onwards, the PivotTable does not know about them. Refresh does not help — the range itself is fixed.
+
+The fix is to format your data as a Table first: select it and press `Ctrl` + `T`. A Table expands automatically as rows are added, and a PivotTable built on one picks up new rows on refresh.
+
+Do this always. It costs one keystroke and removes an entire category of silent error.
+
+## Calculated fields
+
+You can add your own calculations inside a PivotTable — a margin percentage, for instance — through PivotTable Analyze, then Fields, Items and Sets.
+
+Use these sparingly. They are invisible to anyone reading the workbook, they do not appear in the source data, and they behave unexpectedly with subtotals because the calculation happens on the aggregated figures rather than row by row.
+
+A calculated column in the source data is almost always the better answer. It is visible, it is checkable, and it behaves the way anyone would expect.
+
+## When to use which
+
+Use a PivotTable to explore data and to answer questions you have not asked before.
+
+Use formulas for anything that has to be reliable, repeatable, and readable by someone who did not build it.
+
+Most good workbooks contain both, doing different jobs.

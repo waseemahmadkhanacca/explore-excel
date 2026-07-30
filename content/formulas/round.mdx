@@ -1,0 +1,91 @@
+---
+slug: round
+name: ROUND
+category: Math
+summary: Round to a set number of decimals
+description: ROUND rounds a number to the number of decimal places you specify. The important thing about it is that it changes the value, not just the display — which is precisely why totals reconcile with it and do not without it.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/budget-vs-actual.xlsx
+related: [SUMPRODUCT, SUMIFS, IF, ABS]
+syntax: '=ROUND(number, num_digits)'
+arguments:
+  - name: number
+    required: true
+    description: The value to round.
+  - name: num_digits
+    required: true
+    description: How many decimal places. 2 for currency, 0 for whole numbers, and negative values to round to tens, hundreds or thousands.
+demo:
+  file: Invoice lines.xlsx
+  columns: [A, B, C, D]
+  headers: [Item, Quantity, Unit price, Tax rate]
+  editable: [1, 2]
+  money: [2]
+  rows:
+    - ['Widget', 7, 24.499, 0.175]
+    - ['Bracket', 13, 8.755, 0.175]
+    - ['Cable', 3, 15.204, 0.05]
+    - ['Housing', 11, 46.996, 0.175]
+    - ['Sensor', 2, 112.405, 0.175]
+    - ['Adapter', 9, 19.909, 0.05]
+  presets:
+    - label: To two decimals
+      formula: '=ROUND(C2, 2)'
+    - label: Line total rounded
+      formula: '=ROUND(B2 * C2, 2)'
+    - label: To whole numbers
+      formula: '=ROUND(C6, 0)'
+    - label: To the nearest hundred
+      formula: '=ROUND(B4 * C4, -2)'
+mistakes:
+  - level: error
+    title: Confusing rounding with formatting
+    body: Changing the decimal places shown on screen does not change the value. The cell still holds 24.499 and still adds up as 24.499. This is why a column of neatly formatted figures can total something other than the sum of what you see. ROUND changes the value itself.
+  - level: warning
+    title: Rounding too early
+    body: Rounding each intermediate step compounds the loss. Calculate at full precision and round once at the end, unless the business rule genuinely requires rounding at each line — as tax rules often do.
+  - level: warning
+    title: Excel rounds half away from zero
+    body: ROUND(0.5,0) gives 1 and ROUND(-0.5,0) gives -1. That is not banker's rounding, which would round half to the nearest even number. For statutory reporting, check which convention applies before assuming.
+  - level: warning
+    title: Floating point makes some halves round unexpectedly
+    body: Computers cannot store every decimal exactly, so a value displaying as 2.675 may be fractionally under it and round to 2.67. This is not an Excel bug and no spreadsheet avoids it. Where it matters, round the inputs rather than the result.
+faq:
+  - q: What is the difference between ROUND and formatting?
+    a: Formatting changes what you see and nothing else. ROUND changes the stored value. If your totals disagree with the figures on screen, formatting is the reason and ROUND is the fix.
+  - q: When should I use ROUNDUP or ROUNDDOWN?
+    a: When the direction matters regardless of the digit. ROUNDUP for quantities that must cover a requirement, ROUNDDOWN for anything that must not overstate. Both take the same arguments as ROUND.
+  - q: What does a negative num_digits do?
+    a: It rounds to the left of the decimal point. -2 rounds to the nearest hundred, -3 to the nearest thousand. This is how figures are presented in thousands in a report.
+  - q: Why does my rounded column still not total correctly?
+    a: Because the total is the sum of unrounded values. Either round each line and sum the rounded ones, or sum first and round the total. Which is right depends on your rules — but pick one and be consistent.
+  - q: Does ROUND affect performance?
+    a: Negligibly. It is one of the cheapest functions in Excel. Do not avoid it for performance reasons.
+---
+
+## Examples
+
+### 1. To two decimal places
+
+<Formula>=ROUND(C2, 2)</Formula>
+
+24.499 becomes 24.50. Note the value has genuinely changed — this cell will now add up as 24.50, unlike a cell that merely displays two decimals.
+
+### 2. Rounding a calculation
+
+<Formula>=ROUND(B2 * C2, 2)</Formula>
+
+Quantity times price, rounded to the penny. Doing this at line level is what makes an invoice total match the sum of its lines, which is exactly what a customer or an auditor will check.
+
+### 3. Negative digits
+
+<Formula>=ROUND(B4 * C4, -2)</Formula>
+
+A negative number of digits rounds to the left of the decimal point. Minus two gives the nearest hundred, which is how summary figures get presented without a helper column of divisions.
+
+<Callout type="warning" title="The reconciliation trap">
+A column formatted to two decimals but holding unrounded values will not total to the sum of what is displayed. Nothing errors — the report is simply out by a few pence and nobody can find why. If a total has to agree to the visible lines, round the values rather than the format.
+</Callout>

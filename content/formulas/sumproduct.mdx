@@ -1,0 +1,95 @@
+---
+slug: sumproduct
+name: SUMPRODUCT
+category: Math
+summary: Multiply then add across arrays
+description: SUMPRODUCT multiplies ranges together element by element and adds the results. That description undersells it — because it handles arrays natively, it does weighted averages, conditional counts and multi-criteria work that predates SUMIFS entirely.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [SUMIFS, COUNTIFS, SUM, ROUND]
+syntax: '=SUMPRODUCT(array1, [array2], ...)'
+arguments:
+  - name: array1
+    required: true
+    description: The first range. With only one argument, SUMPRODUCT behaves like SUM.
+  - name: array2
+    required: false
+    description: Further ranges, multiplied element by element. All must be the same size or you get #VALUE!.
+demo:
+  file: Order lines.xlsx
+  columns: [A, B, C, D]
+  headers: [Product, Quantity, Unit price, Region]
+  editable: [1, 2]
+  money: [2]
+  rows:
+    - ['Widget', 12, 24.50, 'North']
+    - ['Bracket', 40, 8.75, 'South']
+    - ['Cable', 25, 15.20, 'North']
+    - ['Housing', 6, 47.00, 'East']
+    - ['Sensor', 3, 112.40, 'North']
+    - ['Adapter', 18, 19.90, 'West']
+  presets:
+    - label: Order value
+      formula: '=SUMPRODUCT(B2:B7, C2:C7)'
+    - label: Total quantity
+      formula: '=SUMPRODUCT(B2:B7)'
+    - label: Weighted average price
+      formula: '=ROUND(SUMPRODUCT(B2:B7, C2:C7) / SUM(B2:B7), 2)'
+    - label: Compare with SUMIFS
+      formula: '=SUMIFS(B2:B7, D2:D7, "North")'
+mistakes:
+  - level: error
+    title: Ranges of different sizes
+    body: Every array must have identical dimensions. B2:B7 with C2:C8 returns #VALUE!. Unlike SUMIFS, there is no forgiving behaviour at all — the arrays are multiplied position by position.
+  - level: warning
+    title: Text in the range becomes zero
+    body: SUMPRODUCT treats text as zero rather than erroring. A column with "n/a" typed into it quietly reduces the total. The result looks plausible, which is what makes it dangerous.
+  - level: warning
+    title: Reaching for it when SUMIFS would do
+    body: Since Excel 2007, SUMIFS handles most conditional work more legibly. SUMPRODUCT earns its place for weighted averages, OR logic across criteria, and anything genuinely array-shaped. Otherwise SUMIFS is easier for the next person to read.
+  - level: warning
+    title: Slow on very large ranges
+    body: SUMPRODUCT evaluates every element of every array. Pointed at whole columns across thousands of rows and repeated hundreds of times, it becomes noticeably slow. Limit the ranges to the rows that actually contain data.
+faq:
+  - q: What does SUMPRODUCT actually do?
+    a: It lines the arrays up, multiplies each set of matching positions, then adds all those products. With one array it is just SUM. With two it is the classic quantity times price total.
+  - q: When should I use it instead of SUMIFS?
+    a: For weighted averages, for OR logic across criteria, and where the calculation is genuinely array-shaped. For straightforward conditional sums, SUMIFS is clearer.
+  - q: How does SUMPRODUCT do conditional sums?
+    a: A comparison like (D2:D7="North") produces TRUE and FALSE values. Multiplying by them turns TRUE into 1 and FALSE into 0, so non-matching rows contribute nothing. This is how conditional totals were built before SUMIFS existed.
+  - q: Why is it in modern spreadsheets at all?
+    a: Weighted averages, mainly. There is no WEIGHTEDAVERAGE function, and =SUMPRODUCT(weights,values)/SUM(weights) remains the standard way to do it.
+  - q: Does it need Ctrl+Shift+Enter?
+    a: No. SUMPRODUCT handles arrays natively, which was its original advantage over array formulas and is why it survived into modern Excel.
+---
+
+## Examples
+
+### 1. Quantity times price
+
+The classic use, and the one worth knowing.
+
+<Formula>=SUMPRODUCT(B2:B7, C2:C7)</Formula>
+
+Each quantity is multiplied by its own unit price and the results are added. Without SUMPRODUCT you would need a helper column of line totals and then a SUM.
+
+### 2. A weighted average
+
+There is no built-in function for this, so SUMPRODUCT is the standard answer.
+
+<Formula>=ROUND(SUMPRODUCT(B2:B7, C2:C7) / SUM(B2:B7), 2)</Formula>
+
+Total value divided by total quantity gives the average price weighted by how much of each product was sold. A plain AVERAGE of the price column would treat a three-unit line the same as a forty-unit line, and give a materially different answer.
+
+### 3. With a single array
+
+<Formula>=SUMPRODUCT(B2:B7)</Formula>
+
+One argument and it is simply SUM. Not useful in itself, but it shows what the function is doing underneath.
+
+<Callout type="tip" title="How the conditional version works">
+Writing =SUMPRODUCT((D2:D7="North")*B2:B7) sums quantities for the North region only. The comparison produces TRUE and FALSE, multiplication converts those to 1 and 0, and non-matching rows contribute nothing. This is how everyone did conditional sums before SUMIFS arrived in 2007, and it still works in every version.
+</Callout>

@@ -1,0 +1,92 @@
+---
+slug: dashboards
+title: Charts and dashboards people actually read
+level: Intermediate
+summary: Choosing the right chart, and separating your data from your presentation so nothing breaks.
+description: How to build a dashboard that survives being handed over — chart selection, layout, and the one structural decision that determines whether it lasts.
+updated: 2026-07-23
+readingTime: 9
+related: [SUMIFS, FILTER, UNIQUE, ROUND]
+---
+
+Most dashboards fail for one of two reasons. Either they show the wrong thing well, or they show the right thing and break the moment someone else touches them.
+
+Both are avoidable, and neither is about chart formatting.
+
+## The structural decision
+
+Build your dashboard in three layers, on separate sheets:
+
+1. **Data** — the raw records, one row each, untouched
+2. **Calculations** — the aggregations that feed the charts
+3. **Presentation** — the charts and the layout
+
+Charts read from layer 2, never from layer 1.
+
+This sounds like extra work. It is what makes the difference between a dashboard that survives a year and one that breaks the first time the source data changes shape.
+
+A chart built directly on raw transaction data has an implicit dependency on the exact rows and columns being where they were. Add a column, and the chart series points at the wrong field. Nothing errors. The chart just shows something different and looks fine.
+
+A chart built on a small aggregation table has one dependency, in a place you can see.
+
+## Choosing a chart
+
+Most chart choices are decided by what you are comparing:
+
+| What you are showing | Use |
+|---|---|
+| Change over time | Line |
+| Comparison across categories | Bar, horizontal if the labels are long |
+| Part of a whole | Stacked bar, or just a table |
+| Relationship between two measures | Scatter |
+| One number that matters | Large text, not a chart |
+
+That last row is the one people miss. If the message is "revenue was £4.2m", a gauge or a single-value doughnut adds nothing. Large clear type says it better and takes a second to read.
+
+**On pie charts:** they work for two or three slices and become unreadable beyond that, because humans compare angles poorly. A bar chart sorted by size shows the same data more clearly, almost always. Use a pie when the point is genuinely "this one is about half" and never for a ranking.
+
+## Sort your bars
+
+An unsorted bar chart makes the reader do work you could have done for them. Sorting by value turns "which is biggest" from a scanning exercise into an instant answer.
+
+The exception is a natural order — months, or age bands — where reordering would be confusing.
+
+## Start bar charts at zero
+
+A bar chart's message is carried by the relative lengths of the bars. Truncating the axis exaggerates differences, sometimes dramatically. A 3% gap can be made to look like a doubling.
+
+Line charts are different: they show change, and a zero baseline often compresses the shape into a flat line that hides the trend. Truncating a line axis is legitimate, provided the axis is labelled honestly.
+
+## Colour
+
+Pick one accent colour and one neutral. Use the accent for the thing you want noticed and the neutral for everything else.
+
+Dashboards with eight colours are asking the reader to work out what the colours mean. Dashboards with one accent are telling them where to look.
+
+If a category has an established meaning — red for over budget, for instance — keep it consistent across every chart on the page. Nothing undermines a report faster than red meaning "bad" in one chart and "region 3" in the next.
+
+## The aggregation layer
+
+This is where `SUMIFS` earns its place. A calculation sheet is typically a small grid:
+
+```
+=SUMIFS(Data!$F:$F, Data!$C:$C, $A5, Data!$B:$B, B$4)
+```
+
+Regions down the side, months across the top, one formula filled across and down. Note the dollar signs — locking the column on `$A5` and the row on `B$4` is what lets one formula fill the whole grid.
+
+That grid is what your chart points at. It is small, it is visible, and if a number looks wrong you can see immediately which cell to check.
+
+## What to leave out
+
+**Every metric you have.** A dashboard is a set of decisions about what matters. Twenty charts is a data dump, and the reader will look at none of them.
+
+**Gauges and speedometers.** They consume a great deal of space to show one number against one target. A number with a small variance figure beside it does the same job in a fraction of the space.
+
+**3D anything.** Perspective distorts the very lengths and angles the chart exists to convey.
+
+## Test it by handing it over
+
+The real test of a dashboard is not whether it looks good. It is whether someone else can update it next month without asking you how.
+
+If the answer involves explaining which cells to overwrite and which to leave alone, the structure needs work — not the formatting.

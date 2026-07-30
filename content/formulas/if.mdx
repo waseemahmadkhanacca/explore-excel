@@ -1,0 +1,99 @@
+---
+slug: if
+name: IF
+category: Logical
+summary: Return one value or another
+description: IF tests a condition and returns one thing when it is true and another when it is false. It is the foundation of every decision a spreadsheet makes, and the function most likely to be nested until nobody can read it.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [IFS, IFERROR, AND, COUNTIFS]
+syntax: '=IF(logical_test, value_if_true, [value_if_false])'
+arguments:
+  - name: logical_test
+    required: true
+    description: Any expression that evaluates to TRUE or FALSE, such as A2>100 or B2="North".
+  - name: value_if_true
+    required: true
+    description: What to return when the test passes. Can be a number, text in quotes, a cell reference, or another formula.
+  - name: value_if_false
+    required: false
+    description: What to return when it fails. Omit it and you get FALSE, which is rarely what you want in a report.
+demo:
+  file: Stock levels.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Product, Stock, Reorder point]
+  editable: [2, 3]
+  rows:
+    - ['SKU-101', 'Widget', 140, 50]
+    - ['SKU-108', 'Bracket', 62, 80]
+    - ['SKU-114', 'Cable', 25, 30]
+    - ['SKU-122', 'Housing', 8, 20]
+    - ['SKU-130', 'Sensor', 31, 25]
+    - ['SKU-145', 'Adapter', 54, 40]
+  presets:
+    - label: Simple test
+      formula: '=IF(C2>D2, "OK", "Reorder")'
+    - label: Compare two cells
+      formula: '=IF(C4<D4, "Below reorder point", "Fine")'
+    - label: Nested test
+      formula: '=IF(C5=0, "Out of stock", IF(C5<D5, "Reorder", "OK"))'
+    - label: Returning a number
+      formula: '=IF(C3<D3, D3-C3, 0)'
+mistakes:
+  - level: error
+    title: Text results without quotation marks
+    body: Write "OK" not OK. Without quotes Excel treats the word as a defined name it cannot find and returns #NAME?. Numbers do not need quotes, and putting them in quotes turns them into text you can no longer add up.
+  - level: error
+    title: Omitting the third argument
+    body: =IF(A2>10,"High") returns the word FALSE when the test fails, not a blank. If you want nothing, write "" as the third argument. A column of FALSE values in a report looks like a broken formula.
+  - level: warning
+    title: Nesting until it is unreadable
+    body: More than three levels of IF becomes very hard to follow and to fix. Use IFS instead, or a lookup table. If you are writing the fifth nested IF, the problem is the approach rather than the formula.
+  - level: warning
+    title: Testing text with = when case matters
+    body: The = comparison ignores case, so "north" equals "North". If case genuinely matters, use EXACT. Most of the time the case-insensitive behaviour is what you want, but it can hide duplicates you needed to spot.
+faq:
+  - q: How many IFs can I nest?
+    a: Excel allows 64 levels. Readability collapses well before that, usually around three. Past that point, use IFS, or put the logic in a lookup table where it can be seen and changed without editing formulas.
+  - q: What is the difference between IF and IFS?
+    a: IFS tests conditions in order and returns the first match, without nesting. It is easier to read and to extend, but it needs Excel 2019 or later. IF works everywhere.
+  - q: How do I return a blank cell?
+    a: Use "" as the result. It looks blank but is technically an empty string, so ISBLANK returns FALSE on it and COUNTA still counts it. That matters if another formula is checking for blanks.
+  - q: Can IF test more than one condition?
+    a: Yes, by wrapping the test in AND or OR. For example =IF(AND(A2>10,B2="North"),"Yes","No") requires both to be true.
+  - q: Why does my IF always return the same result?
+    a: Usually a missing comparison operator, or comparing a number against text. =IF(A2="100",...) will not match a cell containing the number 100. Check with ISNUMBER.
+---
+
+## Examples
+
+### 1. A straightforward test
+
+Compare stock against the reorder point and label the row.
+
+<Formula>=IF(C2>D2, "OK", "Reorder")</Formula>
+
+If stock is above the reorder point, the formula returns OK. Otherwise it returns Reorder. Both results are text, so both need quotation marks.
+
+### 2. Nesting for three outcomes
+
+Sometimes two outcomes are not enough. A second IF goes in the false slot of the first.
+
+<Formula>=IF(C5=0, "Out of stock", IF(C5<D5, "Reorder", "OK"))</Formula>
+
+Read it as a sequence: is stock zero? If not, is it below the reorder point? If not, it is fine. Order matters — the first true condition wins, so put the most specific test first.
+
+<Callout type="tip" title="Worth knowing">
+This is exactly where IFS is clearer, if your users are on Excel 2019 or later. The same logic reads as =IFS(C5=0,"Out of stock",C5&lt;D5,"Reorder",TRUE,"OK") with no nesting at all.
+</Callout>
+
+### 3. Returning a number rather than a label
+
+IF does not have to produce text. Here it calculates a shortfall, or zero if there is not one.
+
+<Formula>=IF(C3<D3, D3-C3, 0)</Formula>
+
+Returning 0 rather than "" keeps the column numeric, so you can total it. Mixing text and numbers in one column is what breaks the SUM at the bottom.

@@ -1,0 +1,13 @@
+{
+  "name": "Explore Excel",
+  "short_name": "ExploreExcel",
+  "description": "Live, interactive Excel formula reference and free templates.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f6e56",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/logo-mark.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

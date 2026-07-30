@@ -1,0 +1,56 @@
+---
+slug: merged-cells
+title: Stop using merged cells
+category: Spreadsheet design
+summary: What breaks, why it breaks, and the formatting that gets the same look without the damage.
+description: Merged cells break sorting, filtering, navigation and PivotTables. Centre Across Selection gives the identical appearance with none of the consequences.
+updated: 2026-07-12
+readingTime: 5
+related: [SUMIFS, COUNTIFS]
+---
+
+Merged cells look tidy. They are the single most reliable way to make a spreadsheet difficult to work with, and almost everyone who uses them does not know there is an alternative that looks identical.
+
+## What actually breaks
+
+**Sorting.** Excel refuses to sort a range containing merged cells, with an error that does not explain what to do about it. If you sort around them, the merged cell stays put while its data moves, and the labels end up attached to the wrong rows.
+
+**Filtering.** A merged cell spanning several rows shows its value only for the first. Filter on it and the other rows disappear, because as far as Excel is concerned they are empty.
+
+**Navigation.** `Ctrl` plus arrow stops at merged cells. On a sheet with merged headers, moving around by keyboard becomes unpredictable, and selecting a column with `Ctrl` `Space` selects more than you expected.
+
+**PivotTables.** A merged header row means the fields have no usable names. Excel either refuses to build the PivotTable or names the fields Column1, Column2, and so on.
+
+**Formulas.** A merged block holds its value in the top-left cell only. Every other cell in the block is genuinely empty, so `COUNTA` and `COUNTIFS` return numbers that look wrong and are technically correct.
+
+**Copy and paste.** Pasting into or out of a range with merged cells produces shape mismatches and an error message that does not identify the cause.
+
+## The replacement
+
+Select the cells you would have merged. Right-click, Format Cells, Alignment tab, and set Horizontal to **Centre Across Selection**.
+
+The text centres across the range exactly as merging would. Visually there is no difference at all.
+
+The cells stay separate. Sorting works, filtering works, navigation works, PivotTables work, formulas count correctly.
+
+It has been in Excel for decades and it is buried in a dialogue box, which is the entire reason people merge instead.
+
+## Where merging is acceptable
+
+A title cell at the top of a printed report, outside the data range, harms nothing. If it is not part of a table anyone will sort, filter or analyse, merge away.
+
+The rule is about data. Above the data, do what you like.
+
+## Finding the ones you have
+
+Home, then Find and Select, then Find, then Options, then Format, then Alignment, and tick Merge cells. Find All lists every merged cell in the sheet.
+
+On a workbook you have inherited this is often a long list, and it explains a surprising number of otherwise inexplicable problems.
+
+## Why this is worth caring about
+
+Merged cells are not a style disagreement. They break specific, common operations in ways that produce wrong answers rather than error messages.
+
+The filtering case is the one that causes real damage: rows vanish from a filtered view, someone totals what remains, and the number is wrong with nothing to indicate it.
+
+Centre Across Selection takes four clicks and removes the entire category of problem.

@@ -1,0 +1,87 @@
+---
+slug: xlookup-vs-alternatives
+title: XLOOKUP, VLOOKUP or INDEX/MATCH
+category: Formulas
+summary: Which to use, when compatibility should override preference, and why the answer changes if your file goes to clients.
+description: A practical comparison of Excel's three lookup approaches, focused on the deciding factor most articles skip — who opens the file.
+updated: 2026-07-18
+readingTime: 7
+related: [XLOOKUP, VLOOKUP, INDEX, MATCH]
+---
+
+Most comparisons of these three end with "use XLOOKUP, it is better". That is correct and incomplete, because it ignores the question that actually decides it.
+
+## The technical comparison, briefly
+
+| | VLOOKUP | INDEX/MATCH | XLOOKUP |
+|---|---|---|---|
+| Looks left | No | Yes | Yes |
+| Survives column insertion | No | Yes | Yes |
+| Default match type | Approximate | Exact | Exact |
+| Built-in not-found value | No | No | Yes |
+| Works in Excel 2019 | Yes | Yes | No |
+| Readability | Good | Fair | Good |
+
+On the technical merits XLOOKUP wins on everything except the row that matters most.
+
+## The deciding question
+
+**Who opens this file?**
+
+If the answer is "me and my team, all on Microsoft 365", use XLOOKUP. It is clearer, it is shorter, and its fourth argument removes the need to wrap it in `IFERROR`.
+
+If the answer includes anyone outside your organisation — clients, auditors, suppliers, a regulator — you have a problem. XLOOKUP returns `#NAME?` in Excel 2019 and earlier. The file does not degrade gracefully. It arrives visibly broken, and the recipient's conclusion is that you sent them something faulty.
+
+Plenty of organisations run Excel 2019 or 2016, particularly in regulated industries where upgrades are slow. In audit work I still see it regularly.
+
+## Why VLOOKUP's weakness is worse than it sounds
+
+The column index problem is not merely inconvenient. Consider:
+
+```
+=VLOOKUP(A2, Products!A:F, 4, FALSE)
+```
+
+That returns column D. Someone inserts a column in the Products sheet — a perfectly reasonable thing to do — and now it returns what used to be column C.
+
+**No error appears.** The formula still works. It returns a real value from the wrong field, and the report is wrong in a way that looks entirely normal.
+
+INDEX/MATCH does not have this failure. Its ranges adjust when columns are inserted, because it references ranges rather than counting positions.
+
+That single difference is why I would use INDEX/MATCH over VLOOKUP even before considering XLOOKUP.
+
+## The compatible answer
+
+```
+=INDEX(Prices!C:C, MATCH(A2, Prices!A:A, 0))
+```
+
+Longer than XLOOKUP, and it does everything VLOOKUP cannot: looks in any direction, survives structural changes, and works in every version of Excel back to the 1990s.
+
+The `0` is not optional. Without it, MATCH does an approximate match on data it assumes is sorted, and on unsorted data returns whatever it happens to land on.
+
+## When approximate matching is right
+
+There is one case where the approximate match is the point rather than a hazard: banding.
+
+Tax brackets, commission tiers, volume discounts, shipping bands — all are "find the largest threshold at or below this value". That is exactly what `TRUE` in VLOOKUP, or match mode `-1` in XLOOKUP, does.
+
+Two conditions must hold: the lookup column is numeric, and it is sorted ascending. Break either and the result is arbitrary with no warning.
+
+## What I would actually do
+
+**Internal file, modern Excel:** XLOOKUP. Use the fourth argument rather than wrapping in IFERROR.
+
+**Leaving the organisation:** INDEX/MATCH. Slightly longer, works everywhere, no apology needed.
+
+**Existing VLOOKUP that works:** leave it. Rewriting working formulas introduces risk for no gain. Change it when you are editing that area anyway.
+
+**Banding:** either, with the match type set deliberately and a note in the workbook explaining that the lookup column must stay sorted.
+
+## The part that gets skipped
+
+Whichever you choose, the failure mode is almost never the function. It is the data.
+
+A trailing space, a number stored as text, a non-breaking space pasted from a web page — these produce `#N/A` on values that look identical on screen, and swapping VLOOKUP for XLOOKUP does nothing about any of them.
+
+Before debugging the formula, check the data with `=ISNUMBER(A2)` and `=LEN(A2)-LEN(TRIM(A2))`. That eliminates the most common causes in about thirty seconds.

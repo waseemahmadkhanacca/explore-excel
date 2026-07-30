@@ -1,0 +1,92 @@
+---
+slug: workbook-fragility
+title: Why your workbook breaks when someone else opens it
+category: Spreadsheet design
+summary: Hardcoded ranges, hidden assumptions, and the habits that make a spreadsheet survive being handed over.
+description: The specific structural decisions that determine whether a workbook still works after it leaves your hands, drawn from auditing other people's spreadsheets.
+updated: 2026-07-20
+readingTime: 8
+related: [SUMIFS, XLOOKUP, IFERROR]
+---
+
+A spreadsheet that works for you is not the same thing as a spreadsheet that works.
+
+The difference only appears when someone else opens it — usually at month end, usually under time pressure, usually when you are unavailable. Auditing other people's workbooks for a living teaches you that the failures are remarkably consistent.
+
+Here are the ones worth designing against.
+
+## The hardcoded number inside a formula
+
+```
+=B12 * 1.175
+```
+
+Six months later the rate changes and nobody knows this cell exists. There is no way to find it except reading every formula.
+
+The fix costs nothing: put the rate in its own labelled cell and reference it.
+
+```
+=B12 * $D$2
+```
+
+Now it is visible, it is changeable in one place, and anyone opening the file can see what assumption is being made. This is the cheapest structural improvement available and it is skipped more often than any other.
+
+**The test:** could someone find every assumption in this workbook without reading the formulas? If not, some of them are hidden.
+
+## The range that stopped growing
+
+```
+=SUMIFS(D2:D500, B2:B500, "North")
+```
+
+Perfect, until row 501. Then it silently excludes the new data. The total is wrong, the formula is not broken, and nothing indicates a problem.
+
+Two fixes. Format the data as a Table with `Ctrl` `T`, which expands automatically. Or reference whole columns — `D:D` — which is slightly slower but never truncates.
+
+I prefer Tables, because they also give the ranges readable names. But whole columns are better than a fixed range that will quietly stop being right.
+
+## Values pasted over formulas
+
+Someone needed to override one number, so they typed it in. The formula is gone and the cell looks identical to its neighbours.
+
+This is genuinely hard to spot and it is everywhere. In an audit it is one of the first things to look for.
+
+The defence is visual: give input cells a distinct format — blue text is the financial convention — so a typed value in a calculated column stands out. It does not prevent the override, but it makes it visible.
+
+## Merged cells
+
+They look tidy. They break sorting, break filtering, break `Ctrl` plus arrow navigation, break PivotTables, and make ranges behave in ways that are difficult to predict.
+
+Centre Across Selection gives the same appearance with none of the consequences. It is in Format Cells, under Horizontal alignment, and almost nobody knows it is there.
+
+## Subtotals inside the data
+
+Someone adds a subtotal row every ten records to make the sheet easier to read. Now every `SUMIFS` below it double-counts, and every PivotTable built on the range is wrong.
+
+The data layer should contain only data. Summaries belong somewhere else, referencing it.
+
+This is the same principle as separating presentation from data in a dashboard, and it is violated most often by people trying to be helpful.
+
+## IFERROR hiding a real failure
+
+```
+=IFERROR(VLOOKUP(A2, Ref!A:C, 3, FALSE), 0)
+```
+
+Reasonable, until someone deletes a column in the reference sheet. The `VLOOKUP` now returns `#REF!`, `IFERROR` catches it, and the model reports zero. Confidently. Forever.
+
+`IFNA` catches only the not-found case and lets structural errors surface. In a model, an error is information — it is telling you something is broken, and suppressing it does not fix anything.
+
+## No indication of what the file is for
+
+Open a workbook you did not build and the first question is: what is this, what does it need, and what does it produce?
+
+A single sheet at the front answering those three questions costs ten minutes and saves an hour every time someone new opens the file. Every template on this site has one for exactly this reason.
+
+## The pattern underneath
+
+All of these share a shape. Each is a decision that was obvious to the person making it and invisible to everyone afterwards.
+
+The habit that prevents most of them is asking one question before you save: **if I were not available, could someone else use this correctly?**
+
+Not "could they work it out" — could they use it correctly without knowing what you know. That question catches hardcoded assumptions, fixed ranges, hidden overrides and undocumented inputs, because every one of them fails it.

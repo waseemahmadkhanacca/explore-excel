@@ -1,0 +1,91 @@
+---
+slug: left
+name: LEFT
+category: Text
+summary: Take characters from the left
+description: LEFT returns a set number of characters from the start of a piece of text. With RIGHT and MID it covers most of the work of pulling codes, prefixes and fixed-width fields out of imported data.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [MID, TRIM, SUBSTITUTE, TEXTJOIN]
+syntax: '=LEFT(text, [num_chars])'
+arguments:
+  - name: text
+    required: true
+    description: The text to take from.
+  - name: num_chars
+    required: false
+    description: How many characters. Omit it and you get one. Ask for more than there are and you get the whole string, with no error.
+demo:
+  file: Product codes.xlsx
+  columns: [A, B, C, D]
+  headers: [Full code, Description, Unit cost, Quantity]
+  editable: [2, 3]
+  money: [2]
+  rows:
+    - ['FIX-101-NORTH', 'M8 bracket', 8.75, 140]
+    - ['RAW-208-SOUTH', 'Steel sheet', 42.00, 62]
+    - ['CON-114-NORTH', 'Cutting fluid', 15.20, 25]
+    - ['FIX-322-EAST', 'Hex bolt', 2.40, 880]
+    - ['PKG-430-NORTH', 'Carton 300mm', 1.15, 1200]
+    - ['RAW-145-WEST', 'Aluminium bar', 19.90, 54]
+  presets:
+    - label: Category prefix
+      formula: '=LEFT(A2, 3)'
+    - label: Just one character
+      formula: '=LEFT(A3)'
+    - label: The numeric part
+      formula: '=MID(A2, 5, 3)'
+    - label: More than exists
+      formula: '=LEFT(B4, 100)'
+mistakes:
+  - level: error
+    title: The result is text, even when it looks like a number
+    body: =LEFT("2026-01",4) returns the text "2026", not the number 2026. It will not add up and will not match a numeric lookup. Wrap it in VALUE when you need a number.
+  - level: warning
+    title: Assuming a fixed width that is not fixed
+    body: LEFT(A2,3) works while every code has a three-character prefix. One record with a two-character prefix returns the wrong thing and nothing errors. If the length varies, find the separator with FIND rather than hardcoding a count.
+  - level: warning
+    title: Leading spaces count as characters
+    body: On text with a leading space, LEFT returns the space plus one fewer real character. Wrap the source in TRIM first when the data came from an export.
+  - level: warning
+    title: Asking for more characters than exist
+    body: This does not error — it quietly returns the whole string. That makes an incorrect count harder to spot than it should be, because the result still looks reasonable.
+faq:
+  - q: How do I split text at a separator rather than a fixed position?
+    a: Combine with FIND. =LEFT(A2,FIND("-",A2)-1) returns everything before the first hyphen, however long it is. The minus one drops the hyphen itself.
+  - q: What is the difference between LEFT, RIGHT and MID?
+    a: LEFT counts from the start, RIGHT from the end, and MID from a position you specify. MID can do all three jobs but the other two are clearer when they fit.
+  - q: How do I get the last part of a code?
+    a: =RIGHT(A2,LEN(A2)-FIND("-",A2)) for a single separator. With several separators it becomes awkward — Text to Columns or Power Query is the better tool.
+  - q: Why does my LEFT result not match in a lookup?
+    a: Because it is text. If the lookup column holds real numbers, =VALUE(LEFT(A2,4)) converts it. Numbers and text that look identical never match.
+  - q: Is there a SPLIT function?
+    a: TEXTSPLIT exists in Excel 365 and does exactly this. In earlier versions, LEFT, RIGHT, MID and FIND together are the standard approach.
+---
+
+## Examples
+
+### 1. Pulling a category prefix
+
+<Formula>=LEFT(A2, 3)</Formula>
+
+Every code here begins with a three-letter category. LEFT returns FIX, RAW, CON or PKG, which can then be grouped or looked up.
+
+### 2. The default
+
+<Formula>=LEFT(A3)</Formula>
+
+Omit the count and you get one character. Rarely useful on its own, but it explains why a LEFT with a missing argument returns a single letter rather than erroring.
+
+### 3. Reaching into the middle
+
+<Formula>=MID(A2, 5, 3)</Formula>
+
+LEFT cannot skip. MID starts at a position and takes a length, so this returns the three-digit number after the prefix and hyphen.
+
+<Callout type="tip" title="When the width is not fixed">
+Hardcoding a character count only works while every value has the same shape. =LEFT(A2, FIND("-",A2)-1) finds the first hyphen and takes everything before it, so it keeps working when a prefix is two characters or four. Worth the extra length in anything that will be reused.
+</Callout>

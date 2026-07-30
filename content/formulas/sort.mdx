@@ -1,0 +1,97 @@
+---
+slug: sort
+name: SORT
+category: Dynamic array
+summary: Sort a range by any column
+description: SORT returns a sorted copy of a range, spilling into the cells below and updating itself as the source changes. Unlike the Sort button it does not touch the original data, which makes it safe to use on something other people rely on.
+versions: [Excel 365, Excel 2021]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/kpi-dashboard.xlsx
+related: [FILTER, UNIQUE, MAXIFS, INDEX]
+syntax: '=SORT(array, [sort_index], [sort_order], [by_col])'
+arguments:
+  - name: array
+    required: true
+    description: The range to sort.
+  - name: sort_index
+    required: false
+    description: Which column to sort by, counted from the first column of the array. Defaults to 1.
+  - name: sort_order
+    required: false
+    description: 1 for ascending, -1 for descending. Defaults to 1.
+  - name: by_col
+    required: false
+    description: FALSE sorts rows, TRUE sorts columns. Rows is the default and almost always what you want.
+demo:
+  file: Q3 regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Order, Region, Status, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['#1041', 'North', 'Closed', 12400]
+    - ['#1042', 'South', 'Open', 8100]
+    - ['#1043', 'North', 'Open', 9600]
+    - ['#1044', 'North', 'Closed', 15250]
+    - ['#1045', 'East', 'Closed', 7300]
+    - ['#1046', 'North', 'Closed', 4880]
+  presets:
+    - label: Largest value
+      formula: '=MAX(D2:D7)'
+    - label: Smallest value
+      formula: '=MIN(D2:D7)'
+    - label: Largest in the North
+      formula: '=MAXIFS(D2:D7, B2:B7, "North")'
+    - label: Which order is largest
+      formula: '=INDEX(A2:A7, MATCH(MAX(D2:D7), D2:D7, 0))'
+mistakes:
+  - level: error
+    title: Not available before Excel 2021
+    body: SORT returns #NAME? in Excel 2019 and earlier. There is no formula equivalent that behaves the same way — the Sort button is the fallback, with the difference that it changes the data rather than producing a live copy.
+  - level: error
+    title: The spill range is blocked
+    body: SORT needs empty cells for its output. Anything in the way gives #SPILL!. Because the result is the same size as the source, this usually means clearing a block rather than a single cell.
+  - level: warning
+    title: sort_index counts from the array, not the sheet
+    body: Sorting C2:F7 by column 2 sorts by column D, not column B. The index is relative to the range you passed in, which is the same trap INDEX sets.
+  - level: warning
+    title: Sorting a range that includes headers
+    body: Include the header row in the array and it gets sorted along with the data, usually ending up somewhere in the middle. Start the array below the headers.
+faq:
+  - q: Why does the demo use MAX rather than SORT?
+    a: The interactive grid evaluates one formula into one cell, and SORT spills a whole table. The presets show the related single-value answers. SORT itself is best tried in Excel where the spill is visible.
+  - q: How do I sort by more than one column?
+    a: Pass arrays for sort_index and sort_order — =SORT(A2:D7,{2,4},{1,-1}) sorts by column 2 ascending then column 4 descending. The braces make an array constant.
+  - q: What is SORTBY?
+    a: SORTBY sorts one range according to the values in another, including a column that is not part of the output. Use it when the sort key should not appear in the result.
+  - q: Does SORT change my original data?
+    a: No, and that is the main advantage. It produces a sorted copy elsewhere. The Sort button rearranges the data in place, which is irreversible once saved.
+  - q: How do I get just the top five?
+    a: Combine with TAKE in Excel 365 — =TAKE(SORT(A2:D7,4,-1),5). In Excel 2021 use LARGE with INDEX and MATCH, or sort and reference the first five rows.
+---
+
+## Examples
+
+### 1. The largest value
+
+<Formula>=MAX(D2:D7)</Formula>
+
+In Excel, `=SORT(A2:D7, 4, -1)` would return the whole table ordered by amount, largest first. The grid above shows single values instead, because it evaluates one formula into one cell.
+
+### 2. Conditional maximum
+
+<Formula>=MAXIFS(D2:D7, B2:B7, "North")</Formula>
+
+The largest order within one region. MAXIFS answers a narrower question than SORT but works in Excel 2019 and needs no spill space.
+
+### 3. Finding which row holds the maximum
+
+<Formula>=INDEX(A2:A7, MATCH(MAX(D2:D7), D2:D7, 0))</Formula>
+
+This is the pattern for "which one is biggest" rather than "how big is the biggest". MAX finds the value, MATCH finds its position, INDEX returns the label. It works in every version of Excel.
+
+<Callout type="tip" title="Sorting without touching the data">
+The real advantage of SORT is that it leaves the source alone. On a shared workbook, using the Sort button rearranges rows for everyone, permanently, and there is no record of what the order used to be. A SORT formula in a separate area gives you the view you need without that risk.
+</Callout>

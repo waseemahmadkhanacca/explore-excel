@@ -1,0 +1,94 @@
+---
+slug: match
+name: MATCH
+category: Lookup
+summary: Find the position of a value
+description: MATCH searches a range for a value and returns its position as a number, not the value itself. That sounds unhelpful until you feed the position into INDEX, which is where nearly all of its usefulness lies.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [INDEX, XLOOKUP, VLOOKUP, COUNTIFS]
+syntax: '=MATCH(lookup_value, lookup_array, [match_type])'
+arguments:
+  - name: lookup_value
+    required: true
+    description: The value to find.
+  - name: lookup_array
+    required: true
+    description: A single row or column to search. Not a two-dimensional block.
+  - name: match_type
+    required: false
+    description: 0 for an exact match. 1 finds the largest value at or below and needs ascending data. -1 finds the smallest at or above and needs descending data. Defaults to 1, which is almost never what you want.
+demo:
+  file: Product catalogue.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Product, Price, Stock]
+  editable: [2, 3]
+  money: [2]
+  rows:
+    - ['SKU-101', 'Widget', 24.50, 140]
+    - ['SKU-108', 'Bracket', 8.75, 62]
+    - ['SKU-114', 'Cable', 15.20, 25]
+    - ['SKU-122', 'Housing', 47.00, 8]
+    - ['SKU-130', 'Sensor', 112.40, 31]
+    - ['SKU-145', 'Adapter', 19.90, 54]
+  presets:
+    - label: Find a position
+      formula: '=MATCH("SKU-122", A2:A7, 0)'
+    - label: Match on a number
+      formula: '=MATCH(112.4, C2:C7, 0)'
+    - label: Feed it into INDEX
+      formula: '=INDEX(B2:B7, MATCH("SKU-145", A2:A7, 0))'
+    - label: Not found
+      formula: '=MATCH("SKU-999", A2:A7, 0)'
+mistakes:
+  - level: error
+    title: Leaving out the zero
+    body: Omit match_type and it defaults to 1, an approximate match that assumes sorted data. On unsorted data the result is arbitrary and no error appears. Write 0 unless you specifically want banding.
+  - level: error
+    title: Searching a two-dimensional range
+    body: MATCH takes a single row or column. Give it A2:D7 and you get #N/A or a meaningless number. Search one column, then use INDEX to reach across.
+  - level: warning
+    title: The position is relative to the range
+    body: MATCH returns the position within the range you gave it, not the worksheet row. Searching A2:A7 for the first item returns 1, not 2. Mixing this up shifts every INDEX result by one row.
+  - level: warning
+    title: Duplicates return only the first
+    body: MATCH stops at the first hit. If the value appears more than once, later occurrences are invisible. Use COUNTIFS to check for duplicates before relying on the result.
+faq:
+  - q: What does MATCH actually return?
+    a: A position number. Searching A2:A7 and finding the value in A4 returns 3, because A4 is the third cell in that range. It never returns the value itself.
+  - q: Why combine MATCH with INDEX?
+    a: MATCH finds where something is, INDEX returns what is there. Together they do what VLOOKUP does, but in any direction and without breaking when columns move.
+  - q: Can MATCH find a partial match?
+    a: Yes, with wildcards and match_type 0. "SKU-1*" matches the first SKU beginning with SKU-1. Wildcards only work on text.
+  - q: How do I find the last occurrence rather than the first?
+    a: There is no direct option. XLOOKUP has a search_mode of -1 that searches backwards. In older Excel it takes an array formula, which is a good sign the data should be restructured instead.
+  - q: Why does MATCH return #N/A on a value I can see?
+    a: The values are not identical. A trailing space, a number stored as text, or a non-breaking space from a web page all look the same on screen. Test with =ISNUMBER() or compare lengths with =LEN().
+---
+
+## Examples
+
+### 1. Finding a position
+
+<Formula>=MATCH("SKU-122", A2:A7, 0)</Formula>
+
+Returns 4, because SKU-122 is the fourth entry in A2:A7. The zero forces an exact match, which is what you want almost every time.
+
+### 2. Matching a number
+
+<Formula>=MATCH(112.4, C2:C7, 0)</Formula>
+
+Works the same way on numbers. Note that a value stored as text will not match a number, even when they look identical on screen.
+
+### 3. Where it earns its place
+
+<Formula>=INDEX(B2:B7, MATCH("SKU-145", A2:A7, 0))</Formula>
+
+MATCH finds the row, INDEX returns the product name from that row. This pattern is worth learning by heart — it is the compatible equivalent of XLOOKUP and it does not care which direction it reads in.
+
+<Callout type="tip" title="Debugging tip">
+When an INDEX/MATCH fails, split it up. Put the MATCH in its own cell and see what it returns. If it gives #N/A, the problem is the lookup value or the data. If it returns a number, the problem is the INDEX range.
+</Callout>

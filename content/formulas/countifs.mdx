@@ -1,0 +1,94 @@
+---
+slug: countifs
+name: COUNTIFS
+category: Math
+summary: Count rows meeting several conditions
+description: COUNTIFS counts how many rows satisfy every condition you give it. It is the counting counterpart to SUMIFS, and the fastest way to check whether your criteria actually match anything before you rely on a total.
+versions: [Excel 2007 and later]
+updated: 2026-07-23
+readingTime: 5
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/invoice-register.xlsx
+related: [SUMIFS, COUNTIF, IF, SUMPRODUCT]
+syntax: '=COUNTIFS(criteria_range1, criteria1, [criteria_range2, criteria2], ...)'
+arguments:
+  - name: criteria_range1
+    required: true
+    description: The range to test.
+  - name: criteria1
+    required: true
+    description: What to test for. A value, a cell reference, or a comparison in quotes such as ">100".
+  - name: criteria_range2, criteria2
+    required: false
+    description: Further pairs. Every condition must be true for a row to count. All ranges must be the same size.
+demo:
+  file: Q3 regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Order, Region, Status, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['#1041', 'North', 'Closed', 12400]
+    - ['#1042', 'South', 'Open', 8100]
+    - ['#1043', 'North', 'Open', 9600]
+    - ['#1044', 'North', 'Closed', 15250]
+    - ['#1045', 'East', 'Closed', 7300]
+    - ['#1046', 'North', 'Closed', 4880]
+  presets:
+    - label: Count by region
+      formula: '=COUNTIFS(B2:B7, "North")'
+    - label: Two conditions
+      formula: '=COUNTIFS(B2:B7, "North", C2:C7, "Closed")'
+    - label: Numeric comparison
+      formula: '=COUNTIFS(D2:D7, ">10000")'
+    - label: Between two values
+      formula: '=COUNTIFS(D2:D7, ">5000", D2:D7, "<13000")'
+mistakes:
+  - level: error
+    title: Ranges of different sizes
+    body: Every criteria range must have the same number of rows. B2:B7 with C2:C8 returns #VALUE!. This happens most often when a range was extended by hand rather than by dragging.
+  - level: warning
+    title: Counting blanks by accident
+    body: Criteria of "" counts genuinely empty cells, but cells containing a formula that returns "" are not empty and will not be counted. The two look identical on screen. Use COUNTBLANK if you want both.
+  - level: warning
+    title: Expecting OR logic
+    body: Conditions combine with AND, so more criteria always means a smaller count, never a larger one. For OR, add two COUNTIFS together.
+  - level: warning
+    title: Comparison against a cell needs joining
+    body: To count values above whatever is in F1, write ">"&F1. Writing ">F1" looks for the literal text F1 and counts nothing, silently.
+faq:
+  - q: What is the difference between COUNTIF and COUNTIFS?
+    a: COUNTIF takes one condition, COUNTIFS takes up to 127. Unlike SUMIF and SUMIFS, the argument order is the same, so switching between them is safe. Use COUNTIFS by default.
+  - q: How do I count values between two numbers?
+    a: Use the same range twice with two conditions. =COUNTIFS(D2:D7,">5000",D2:D7,"<13000") counts everything in between. Use >= and <= if the boundaries should be included.
+  - q: How do I count unique values?
+    a: COUNTIFS cannot do this. Use =SUMPRODUCT(1/COUNTIFS(range,range)) for a count of distinct entries, or UNIQUE in Excel 365. The SUMPRODUCT version fails if the range contains blanks.
+  - q: Why does my COUNTIFS return zero?
+    a: The criteria never match. This is useful information — run COUNTIFS before trusting a SUMIFS with the same criteria. A zero count explains a zero sum immediately.
+  - q: Can COUNTIFS count dates?
+    a: Yes. Compare against DATE for reliability — ">="&DATE(2026,1,1) — rather than typing a date as text, which depends on regional settings.
+---
+
+## Examples
+
+### 1. A single condition
+
+<Formula>=COUNTIFS(B2:B7, "North")</Formula>
+
+Counts every row in the North region. Note there is no sum range — COUNTIFS only ever counts rows, so the first argument is already a criteria range.
+
+### 2. Narrowing with a second condition
+
+<Formula>=COUNTIFS(B2:B7, "North", C2:C7, "Closed")</Formula>
+
+Both must be true. Every pair you add makes the count smaller, because the conditions combine with AND.
+
+### 3. Counting between two values
+
+<Formula>=COUNTIFS(D2:D7, ">5000", D2:D7, "<13000")</Formula>
+
+The same range appears twice, with a lower and an upper bound. This is the standard way to build a band, and it is how ageing buckets and tax brackets are counted.
+
+<Callout type="tip" title="Use it as a diagnostic">
+When a SUMIFS returns zero and you cannot see why, run COUNTIFS with identical criteria. If the count is zero, the criteria are wrong or the data is not what you think it is. If the count is right but the sum is zero, the sum range is the problem. This narrows the search in one step.
+</Callout>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#E9F7F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <rect x="80" y="76" width="72" height="72" rx="15" fill="#0F6E56"/>
+  <rect x="97" y="118" width="10" height="16" rx="2.5" fill="#5DCAA5"/>
+  <rect x="111" y="107" width="10" height="27" rx="2.5" fill="#5DCAA5"/>
+  <rect x="125" y="96" width="10" height="38" rx="2.5" fill="#FFFFFF"/>
+  <text x="172" y="126" font-family="Inter Tight, Inter, Arial, sans-serif" font-size="38" font-weight="400" fill="#141414">Explore</text>
+  <text x="316" y="126" font-family="Inter Tight, Inter, Arial, sans-serif" font-size="38" font-weight="600" fill="#0F6E56">Excel</text>
+
+  <text x="80" y="286" font-family="Inter Tight, Inter, Arial, sans-serif" font-size="66" font-weight="600" fill="#141414">Stop reading about formulas.</text>
+  <text x="80" y="364" font-family="Inter Tight, Inter, Arial, sans-serif" font-size="66" font-weight="600" fill="#0F6E56">Start using them.</text>
+
+  <text x="80" y="428" font-family="Inter, Arial, sans-serif" font-size="26" fill="#4A4A48">A live spreadsheet on every formula page. Edit it and watch the result change.</text>
+
+  <rect x="80" y="490" width="1040" height="1" fill="#E4E4E0"/>
+  <text x="80" y="540" font-family="JetBrains Mono, monospace" font-size="21" fill="#0F6E56">21 formulas</text>
+  <text x="272" y="540" font-family="JetBrains Mono, monospace" font-size="21" fill="#A3A39F">·</text>
+  <text x="300" y="540" font-family="JetBrains Mono, monospace" font-size="21" fill="#0F6E56">8 free templates</text>
+  <text x="546" y="540" font-family="JetBrains Mono, monospace" font-size="21" fill="#A3A39F">·</text>
+  <text x="574" y="540" font-family="JetBrains Mono, monospace" font-size="21" fill="#0F6E56">6 guides</text>
+  <text x="80" y="578" font-family="Inter, Arial, sans-serif" font-size="19" fill="#6B6B6B">exploreexcel.com</text>
+</svg>

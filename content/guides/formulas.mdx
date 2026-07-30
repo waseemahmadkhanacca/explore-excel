@@ -1,0 +1,110 @@
+---
+slug: formulas
+title: Formulas that do the work for you
+level: Beginner
+summary: Moving from typing numbers to writing logic, and the patterns that cover most business problems.
+description: The handful of formula patterns that solve the majority of real spreadsheet tasks, with the reasoning behind why each one is shaped the way it is.
+updated: 2026-07-23
+readingTime: 10
+related: [SUMIFS, XLOOKUP, IF, COUNTIFS, IFERROR]
+---
+
+Most people learn formulas one at a time, as answers to specific questions. That works, but it is slow, and it leaves you unable to solve anything you have not seen before.
+
+There is a better route. Almost every business calculation is one of five shapes. Learn the shapes and the individual functions become details.
+
+## Shape 1: add up the ones that match
+
+You have a list of transactions and you want a total for one category, one region, one month.
+
+```
+=SUMIFS(D2:D500, B2:B500, "North", C2:C500, "Closed")
+```
+
+Sum range first, then pairs of range-and-condition. Every pair narrows the result further.
+
+This one formula replaces filtering, copying to another sheet, and summing there — and unlike that process, it updates itself when the data changes.
+
+**The diagnostic that saves you time:** if `SUMIFS` returns zero and you cannot see why, run `COUNTIFS` with the same conditions. Zero count means the conditions never match, which points at the data rather than the sum. It is one step and it eliminates half the possible causes.
+
+## Shape 2: fetch a matching value
+
+You have a code and you need the thing that goes with it.
+
+```
+=XLOOKUP(A2, Products!A:A, Products!C:C, "Not found")
+```
+
+Or, for files that might open in older Excel:
+
+```
+=INDEX(Products!C:C, MATCH(A2, Products!A:A, 0))
+```
+
+Both do the same job. `XLOOKUP` is clearer; `INDEX`/`MATCH` works everywhere and does not break when someone inserts a column.
+
+`VLOOKUP` also does this, and I would not start with it. It cannot look left, and its column index breaks silently whenever the table structure changes.
+
+## Shape 3: decide between outcomes
+
+```
+=IF(C2 > D2, "OK", "Reorder")
+```
+
+Two outcomes. For more, use `IFS` rather than nesting:
+
+```
+=IFS(C2=0, "Out of stock", C2<=D2, "Reorder", TRUE, "OK")
+```
+
+The `TRUE` at the end is the catch-all. Without it, anything matching no condition returns `#N/A`.
+
+**Order matters more than people expect.** The first true condition wins and the rest are never checked. Test from most specific to least, or your careful logic gets short-circuited by a broad condition sitting too early.
+
+## Shape 4: clean before you calculate
+
+Formulas fail on messy data far more often than they fail on flawed logic.
+
+```
+=TRIM(A2)
+=VALUE(B2)
+=TRIM(SUBSTITUTE(A2, CHAR(160), " "))
+```
+
+That third one deserves attention. Text pasted from a web page frequently contains character 160, a non-breaking space. It looks exactly like a normal space and `TRIM` ignores it completely. The `SUBSTITUTE` converts it first.
+
+When a lookup fails on data that looks identical, this is the reason more often than anything else.
+
+## Shape 5: handle the failure case
+
+```
+=IFNA(XLOOKUP(A2, Ref!A:A, Ref!B:B), "Not in reference")
+```
+
+Note `IFNA` rather than `IFERROR`. `IFNA` catches only the not-found case. `IFERROR` catches everything, including a `#REF!` from a deleted column — so a genuinely broken formula returns your friendly message and looks fine.
+
+That distinction matters six months later when someone restructures the source sheet. With `IFNA` you get a visible error. With `IFERROR` you get quiet wrong numbers.
+
+## Putting the shapes together
+
+Real formulas combine them:
+
+```
+=IFNA(INDEX(Prices!C:C, MATCH(TRIM(A2), Prices!A:A, 0)), 0)
+```
+
+Reading outward from the middle: trim the lookup value, find its position, return the matching price, and if it is not there return zero.
+
+Written as one line it looks intimidating. Built up shape by shape, it is four steps you already know.
+
+## How to debug one
+
+When a long formula misbehaves, take it apart. Put the innermost piece in its own cell and check what it returns. Then the next layer out.
+
+Nine times in ten the problem is at the bottom — a `MATCH` returning `#N/A` because of a trailing space, or a `VALUE` failing on text with a currency symbol still attached. Finding it takes two minutes if you split the formula and twenty if you stare at the whole thing.
+
+## What to learn next
+
+`SUMIFS`, `XLOOKUP` or `INDEX`/`MATCH`, `IF`, `COUNTIFS`, `TRIM` and `IFNA` will carry you through most of what a finance or operations role demands.
+
+After those, the useful additions are `SUMPRODUCT` for weighted averages, `EOMONTH` for period ends, and `TEXTJOIN` for assembling text. Each has a page in the library with a live example you can edit.

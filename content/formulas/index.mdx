@@ -1,0 +1,100 @@
+---
+slug: index
+name: INDEX
+category: Lookup
+summary: Return a value at a position
+description: INDEX returns the value at a given position in a range. On its own it is rarely useful. Paired with MATCH it becomes the most flexible lookup in Excel, works in every version, and does not break when columns move.
+versions: [All versions]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [MATCH, XLOOKUP, VLOOKUP, IFERROR]
+syntax: '=INDEX(array, row_num, [column_num])'
+arguments:
+  - name: array
+    required: true
+    description: The range to pull a value from.
+  - name: row_num
+    required: true
+    description: Which row of that range, counted from its first row. Row 1 is the first row of the range, not of the sheet.
+  - name: column_num
+    required: false
+    description: Which column, when the range spans more than one. Omit it for a single-column range.
+demo:
+  file: Product catalogue.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Product, Price, Stock]
+  editable: [2, 3]
+  money: [2]
+  rows:
+    - ['SKU-101', 'Widget', 24.50, 140]
+    - ['SKU-108', 'Bracket', 8.75, 62]
+    - ['SKU-114', 'Cable', 15.20, 25]
+    - ['SKU-122', 'Housing', 47.00, 8]
+    - ['SKU-130', 'Sensor', 112.40, 31]
+    - ['SKU-145', 'Adapter', 19.90, 54]
+  presets:
+    - label: Third price
+      formula: '=INDEX(C2:C7, 3)'
+    - label: Row and column
+      formula: '=INDEX(A2:D7, 4, 2)'
+    - label: With MATCH
+      formula: '=INDEX(C2:C7, MATCH("SKU-130", A2:A7, 0))'
+    - label: Looking leftwards
+      formula: '=INDEX(B2:B7, MATCH(47, C2:C7, 0))'
+mistakes:
+  - level: error
+    title: Counting rows from the sheet rather than the range
+    body: INDEX counts from the first row of the range you gave it. In =INDEX(C2:C7,3) the 3 means the third row of C2:C7, which is C4 — not row 3 of the worksheet. Getting this wrong returns a real value from the wrong row, so nothing errors.
+  - level: error
+    title: Row number larger than the range
+    body: =INDEX(C2:C7,9) returns #REF! because the range only has six rows. This usually happens when MATCH found a position in a longer range than the one INDEX is reading from.
+  - level: warning
+    title: The two ranges must line up
+    body: With INDEX and MATCH, the range MATCH searches and the range INDEX returns from must start on the same row and be the same length. A2:A7 with C2:C50 returns the wrong row without any error.
+  - level: warning
+    title: Forgetting the column number on a multi-column range
+    body: Give INDEX a range spanning several columns and omit column_num, and it returns the first column. That is a valid result, so no error appears — just the wrong field.
+faq:
+  - q: Why use INDEX and MATCH instead of VLOOKUP?
+    a: Three reasons. It can look left as well as right, it does not break when a column is inserted, and it works in every version of Excel. The cost is that the formula is longer and takes a moment to read.
+  - q: Is INDEX/MATCH still worth learning now XLOOKUP exists?
+    a: Yes, for compatibility. XLOOKUP returns #NAME? in Excel 2019 and earlier. If your file goes to clients, auditors or anyone outside your organisation, INDEX/MATCH is the version that will still work.
+  - q: How does INDEX return a whole row or column?
+    a: Pass 0 as the row or column number. =INDEX(A2:D7,0,2) returns the entire second column as an array. This is more useful inside other functions than on its own.
+  - q: Can INDEX return a range rather than a value?
+    a: Yes, which is how dynamic ranges are built. =SUM(A2:INDEX(A2:A100,10)) sums the first ten rows. It is a specialist use but a genuinely powerful one.
+  - q: Why does my INDEX/MATCH return #N/A?
+    a: The #N/A comes from MATCH, not INDEX — the lookup value was not found. Test the MATCH on its own first. If it returns a position, the problem is elsewhere.
+---
+
+## Examples
+
+### 1. On its own
+
+Return the third value in a range.
+
+<Formula>=INDEX(C2:C7, 3)</Formula>
+
+The 3 counts from the start of C2:C7, so it returns the value in C4. This is rarely useful by itself because you have to know the position in advance.
+
+### 2. Row and column together
+
+Give INDEX a block and it needs both coordinates.
+
+<Formula>=INDEX(A2:D7, 4, 2)</Formula>
+
+Fourth row, second column of the block — the product name on the Housing row.
+
+### 3. The pairing that matters
+
+MATCH finds the position, INDEX returns the value at it. This is the combination worth committing to memory.
+
+<Formula>=INDEX(C2:C7, MATCH("SKU-130", A2:A7, 0))</Formula>
+
+MATCH looks for SKU-130 in column A and returns 5. INDEX then returns the fifth price. Insert a column anywhere and both ranges adjust automatically, which is precisely what VLOOKUP cannot do.
+
+<Callout type="tip" title="The direction advantage">
+Because the two ranges are independent, INDEX can return from a column to the left of the one being searched. =INDEX(B2:B7, MATCH(47, C2:C7, 0)) finds a price and returns the product name beside it. VLOOKUP cannot do this at all.
+</Callout>

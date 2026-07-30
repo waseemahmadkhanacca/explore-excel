@@ -1,0 +1,105 @@
+---
+slug: sumifs
+name: SUMIFS
+category: Math
+summary: Add values meeting several conditions
+description: SUMIFS adds up the numbers in a range, but only for rows that meet every condition you set. It handles multiple criteria at once, which is what separates it from SUMIF, and it is the function most business reporting actually runs on.
+versions: [Excel 2007 and later]
+updated: 2026-07-23
+readingTime: 6
+video: https://www.youtube.com/watch?v=PLACEHOLDER
+practiceFile: /downloads/cash-flow-forecast.xlsx
+related: [SUMIF, COUNTIFS, XLOOKUP, SUMPRODUCT]
+syntax: '=SUMIFS(sum_range, criteria_range1, criteria1, [criteria_range2, criteria2], ...)'
+arguments:
+  - name: sum_range
+    required: true
+    description: The numbers to add up. This comes first, unlike SUMIF where it comes last.
+  - name: criteria_range1
+    required: true
+    description: The range to test. Must be the same size as sum_range.
+  - name: criteria1
+    required: true
+    description: What to test for. A value, a cell reference, or a comparison in quotes such as ">1000".
+  - name: criteria_range2, criteria2
+    required: false
+    description: Further pairs, up to 127 of them. Every condition must be true for a row to be included.
+demo:
+  file: Q3 regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Order, Region, Status, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['#1041', 'North', 'Closed', 12400]
+    - ['#1042', 'South', 'Open', 8100]
+    - ['#1043', 'North', 'Open', 9600]
+    - ['#1044', 'North', 'Closed', 15250]
+    - ['#1045', 'East', 'Closed', 7300]
+    - ['#1046', 'North', 'Closed', 4880]
+  presets:
+    - label: One condition
+      formula: '=SUMIFS(D2:D7, B2:B7, "North")'
+    - label: Two conditions
+      formula: '=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")'
+    - label: Greater than
+      formula: '=SUMIFS(D2:D7, D2:D7, ">10000")'
+    - label: Everything closed
+      formula: '=SUMIFS(D2:D7, C2:C7, "Closed")'
+mistakes:
+  - level: error
+    title: sum_range and criteria_range are different sizes
+    body: This returns #VALUE!. If your sum range is D2:D7, every criteria range must also be six rows. Mixing D2:D7 with B2:B8 fails, and the error message does not tell you which range is wrong.
+  - level: error
+    title: Putting sum_range last, as in SUMIF
+    body: SUMIF is =SUMIF(range, criteria, sum_range). SUMIFS is =SUMIFS(sum_range, range, criteria). The order is reversed and there is no warning — you simply get the wrong number, or a total of zero.
+  - level: warning
+    title: Comparison operators need quotes
+    body: Write ">1000" not >1000. Without quotes Excel treats it as a broken formula. To compare against a cell, join the operator to the reference — ">"&F1 — rather than writing ">F1".
+  - level: warning
+    title: Text criteria that look identical but are not
+    body: A trailing space, a non-breaking space pasted from a web page, or a number stored as text will all fail to match silently. The total comes back lower than it should and nothing flags it. Check with COUNTIFS first — if the count is zero, the criteria are wrong, not the data.
+faq:
+  - q: What is the difference between SUMIF and SUMIFS?
+    a: SUMIF handles one condition, SUMIFS handles up to 127. They also take their arguments in opposite orders, which causes more errors than the feature difference does. Use SUMIFS for everything and you never have to remember which is which.
+  - q: Can SUMIFS use OR logic instead of AND?
+    a: Not directly. Every criteria pair must be true for a row to count, which is AND logic. For OR, add two SUMIFS together, or use SUMPRODUCT with an addition inside it.
+  - q: How do I sum between two dates?
+    a: Use two criteria on the same range. For example =SUMIFS(D2:D7, A2:A7, ">="&DATE(2026,1,1), A2:A7, "<="&DATE(2026,3,31)). Both conditions apply to the date column.
+  - q: Why does my SUMIFS return zero?
+    a: Almost always the criteria never match. Test with COUNTIFS using the same criteria — if that returns zero too, the problem is the criteria or the data formatting, not the sum. Numbers stored as text are the usual culprit.
+  - q: Can I use wildcards in the criteria?
+    a: Yes. An asterisk matches any number of characters and a question mark matches one. "North*" matches North and Northern. This only works on text, not numbers.
+---
+
+## Examples
+
+### 1. Total by region
+
+The simplest use. One criteria pair, testing the region column.
+
+<Formula>=SUMIFS(D2:D7, B2:B7, "North")</Formula>
+
+Read it as: add the amounts, where the region is North. The sum range comes first, then each range-and-condition pair follows.
+
+### 2. Two conditions at once
+
+This is why SUMIFS exists. Add another pair and both must be satisfied.
+
+<Formula>=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")</Formula>
+
+Only rows that are both in the North region and marked Closed are included. Every additional pair narrows the result further.
+
+<Callout type="tip" title="Worth knowing">
+Criteria pairs are AND logic, never OR. If you need North or South, add two SUMIFS together rather than looking for an OR option that does not exist.
+</Callout>
+
+### 3. Comparisons rather than exact matches
+
+Criteria can test a value rather than match one. The operator goes inside the quotes.
+
+<Formula>=SUMIFS(D2:D7, D2:D7, ">10000")</Formula>
+
+Note that the sum range and criteria range are the same here. That is allowed and often useful — this adds up only the large orders.
+
+To compare against a cell rather than a typed number, join them: `">"&F1`. Writing `">F1"` looks for the literal text F1 and returns zero.

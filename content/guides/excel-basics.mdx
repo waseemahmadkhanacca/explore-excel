@@ -1,0 +1,81 @@
+---
+slug: excel-basics
+title: Excel basics that actually matter
+level: Start here
+summary: The handful of things worth learning first, and the ones you can safely ignore for now.
+description: Cell references, formatting that does not lie to you, and the shortcuts that save real time. Written for someone who uses Excel daily but was never taught it.
+updated: 2026-07-23
+readingTime: 9
+related: [SUMIFS, IF, ROUND]
+---
+
+Most Excel training starts with the ribbon. That is the wrong end. You already know where the buttons are — what you are missing is the small number of concepts that make everything else behave predictably.
+
+There are four. Learn these and most of your remaining problems become lookups rather than mysteries.
+
+## 1. Absolute and relative references
+
+This is the single most important thing in the article.
+
+When you write `=A2*B2` and drag it down, Excel helpfully changes it to `=A3*B3`, then `=A4*B4`. That is a **relative reference** and it is usually what you want.
+
+Now suppose B1 holds a tax rate and you write `=A2*B1`. Drag it down and the second row becomes `=A3*B2` — which points at an empty cell. Your figures come out wrong and nothing errors.
+
+The fix is a dollar sign:
+
+```
+=A2*$B$1
+```
+
+The dollars lock the reference. Dragged down, it stays `$B$1` every time.
+
+**The shortcut worth building into muscle memory:** select a reference in the formula bar and press F4. It cycles through `B1`, `$B$1`, `B$1`, `$B1`. You will use this more than any other keystroke.
+
+The two middle forms lock only the row or only the column, which matters when you are filling a formula across a grid rather than down a column. Do not worry about those until you need them — but know they exist, because when you do need them nothing else will do.
+
+## 2. Formatting is not the same as value
+
+A cell showing `£1,234.00` might contain 1234, or 1233.9987, or the text "£1,234.00".
+
+Formatting changes what you see. It does not change what is stored. This causes two specific problems that account for a large share of the spreadsheet errors I see in audit work.
+
+**Totals that do not agree with the lines above them.** A column formatted to two decimals but holding unrounded values will sum to something other than the sum of the displayed figures. Nobody can find why, because every line looks right. The fix is `ROUND`, which changes the value rather than the display.
+
+**Numbers stored as text.** Imported data frequently arrives as text that looks numeric. It will not sum, and it will not match in a lookup. Test with `=ISNUMBER(A2)`. If a cell that should be a number returns FALSE, that is your problem, and no amount of reformatting will fix it — you have to convert with `VALUE` or Text to Columns.
+
+## 3. One row is one thing
+
+Keep your data as a plain table: one header row, one record per row, no blanks in the middle, no merged cells, no subtotals mixed into the data.
+
+This feels like a rule about tidiness. It is not. Every tool that makes Excel powerful — PivotTables, `SUMIFS`, `FILTER`, charts, Power Query — assumes this shape. Break it and those tools stop working, usually silently.
+
+The commonest breach is the helpful subtotal row inserted every so often. It makes the sheet easier to read and every formula below it wrong.
+
+If you need a readable summary, build it somewhere else and let it reference the clean data. Separating the data layer from the presentation layer is the single habit that most distinguishes a workbook that survives from one that does not.
+
+## 4. Keyboard movement
+
+Four combinations, and you will be noticeably faster:
+
+| Keys | What it does |
+|---|---|
+| `Ctrl` + arrow | Jump to the edge of the data in that direction |
+| `Ctrl` + `Shift` + arrow | Select to that edge |
+| `Ctrl` + `Shift` + `L` | Toggle filters on the current table |
+| `Alt` + `=` | Insert a SUM of the range above |
+
+`Ctrl` + down arrow is also the fastest way to find where your data actually stops, which is often not where you think — a stray space in row 4,000 explains a surprising number of broken ranges.
+
+## What to ignore for now
+
+**Macros and VBA.** Genuinely useful, and almost never the answer to a problem a beginner has. Learn Power Query first; it handles most of what people write macros for, and it does not break when Excel updates.
+
+**Array formulas with Ctrl+Shift+Enter.** Modern Excel handles arrays natively. If a tutorial tells you to press Ctrl+Shift+Enter, it predates 2019 and there is probably a simpler way now.
+
+**Memorising functions.** There are over 450 and you will use about 30. Learn `SUMIFS`, `XLOOKUP` or `INDEX`/`MATCH`, `IF`, `COUNTIFS`, `TRIM` and `ROUND` properly, and look the rest up when you need them.
+
+## The honest summary
+
+You do not need to learn Excel. You need to learn absolute references, understand that formatting lies, keep your data in a clean table, and know six functions well.
+
+Everything after that is looking things up, which is what the formula library on this site is for.
