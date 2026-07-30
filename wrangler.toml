@@ -1,10 +1,13 @@
-name = "explore-excel"
+name = "explore-excel-site"
+main = ".open-next/worker.js"
 compatibility_date = "2026-07-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Subscriber storage. Create it with:
-#   npx wrangler d1 create explore-excel-subscribers
-# then paste the returned database_id below.
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Subscriber storage.
 [[d1_databases]]
 binding = "DB"
 database_name = "explore-excel-subscribers"
