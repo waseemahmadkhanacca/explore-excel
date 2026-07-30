@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 /**
  * Rate limiting.
@@ -106,7 +107,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  // Bindings and secrets live on the Workers env object, never on
+  // process.env — see the matching comment in app/api/subscribe/route.ts.
+  let apiKey: string | undefined;
+  try {
+    apiKey = (getCloudflareContext().env as unknown as { GEMINI_API_KEY?: string })
+      .GEMINI_API_KEY;
+  } catch {
+    apiKey = process.env.GEMINI_API_KEY;
+  }
   if (!apiKey) {
     return NextResponse.json(
       { error: 'The assistant is not configured yet.' },
