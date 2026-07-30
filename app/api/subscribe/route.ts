@@ -9,8 +9,6 @@ import {
 } from '@/lib/subscribers';
 import { SITE } from '@/lib/schema';
 
-export const runtime = 'edge';
-
 /**
  * Rate limiting.
  *
