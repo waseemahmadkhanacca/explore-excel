@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { unsubscribe, type D1Database } from '@/lib/subscribers';
 
-export const runtime = 'edge';
-
 interface Env {
   DB?: D1Database;
 }
