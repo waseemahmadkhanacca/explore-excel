@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getTemplate } from '@/lib/templates';
 import { sendTemplateEmail } from '@/lib/email';
 import {
@@ -74,10 +75,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unknown template.' }, { status: 404 });
   }
 
-  // Cloudflare injects bindings on the request context; locally they are absent.
-  const env = (process.env as unknown) as Env;
-  const apiKey = env.RESEND_API_KEY;
-  const db = env.DB;
+  // On Cloudflare Workers, bindings and secrets are never available via
+  // process.env — they live only on the env object the runtime provides.
+  // getCloudflareContext() is how the OpenNext adapter exposes that object
+  // to a Next.js route. Locally (npm run dev) this context is absent, which
+  // is why the block below falls back to process.env for local development.
+  let apiKey: string | undefined;
+  let db: D1Database | undefined;
+  try {
+    const { env } = getCloudflareContext();
+    apiKey = (env as unknown as Env).RESEND_API_KEY;
+    db = (env as unknown as Env).DB;
+  } catch {
+    const env = (process.env as unknown) as Env;
+    apiKey = env.RESEND_API_KEY;
+    db = env.DB;
+  }
 
   if (!apiKey || !db) {
     return NextResponse.json(
