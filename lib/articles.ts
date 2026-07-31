@@ -1,6 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import matter from 'gray-matter';
+import { GUIDES, BLOG_POSTS } from './content-data.generated';
 
 export interface Article {
   slug: string;
@@ -17,29 +15,19 @@ export interface Article {
   category?: string;
 }
 
-function loadFrom(dir: string): Article[] {
-  const full = path.join(process.cwd(), 'content', dir);
-  if (!fs.existsSync(full)) return [];
-
-  return fs
-    .readdirSync(full)
-    .filter((f) => f.endsWith('.mdx'))
-    .map((file) => {
-      const { data, content } = matter(fs.readFileSync(path.join(full, file), 'utf8'));
-      const d = data as Record<string, unknown>;
-      return {
-        slug: String(d.slug ?? file.replace(/\.mdx$/, '')),
-        title: String(d.title),
-        summary: String(d.summary),
-        description: String(d.description),
-        updated: String(d.updated),
-        readingTime: Number(d.readingTime ?? 5),
-        related: (d.related as string[]) ?? [],
-        level: d.level as string | undefined,
-        category: d.category as string | undefined,
-        body: content,
-      };
-    });
+function toArticle(slug: string, data: Record<string, unknown>, body: string): Article {
+  return {
+    slug: String(data.slug ?? slug),
+    title: String(data.title),
+    summary: String(data.summary),
+    description: String(data.description),
+    updated: String(data.updated),
+    readingTime: Number(data.readingTime ?? 5),
+    related: (data.related as string[]) ?? [],
+    level: data.level as string | undefined,
+    category: data.category as string | undefined,
+    body,
+  };
 }
 
 /** Guides keep a deliberate order — beginner to advanced, not alphabetical. */
@@ -52,32 +40,44 @@ const GUIDE_ORDER = [
   'interview-prep',
 ];
 
+// Parsed once, at module load, from the bundled data — no disk access, which
+// is what makes this safe to run inside a Cloudflare Worker. See
+// scripts/build-content.js for why runtime fs reads do not work there.
+const ALL_GUIDES: Article[] = GUIDES.map((g) =>
+  toArticle(g.slug, g.data as Record<string, unknown>, g.body)
+).sort((a, b) => {
+  const ai = GUIDE_ORDER.indexOf(a.slug);
+  const bi = GUIDE_ORDER.indexOf(b.slug);
+  return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+});
+
+const ALL_POSTS: Article[] = BLOG_POSTS.map((p) =>
+  toArticle(p.slug, p.data as Record<string, unknown>, p.body)
+).sort((a, b) => b.updated.localeCompare(a.updated));
+
+const GUIDES_BY_SLUG = new Map(ALL_GUIDES.map((g) => [g.slug, g]));
+const POSTS_BY_SLUG = new Map(ALL_POSTS.map((p) => [p.slug, p]));
+
 export function getGuides(): Article[] {
-  const all = loadFrom('guides');
-  return all.sort((a, b) => {
-    const ai = GUIDE_ORDER.indexOf(a.slug);
-    const bi = GUIDE_ORDER.indexOf(b.slug);
-    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-  });
+  return ALL_GUIDES;
 }
 
 export function getGuide(slug: string): Article | null {
-  return getGuides().find((g) => g.slug === slug) ?? null;
+  return GUIDES_BY_SLUG.get(slug) ?? null;
 }
 
 export function getGuideSlugs(): string[] {
-  return getGuides().map((g) => g.slug);
+  return ALL_GUIDES.map((g) => g.slug);
 }
 
-/** Posts are newest first. */
 export function getPosts(): Article[] {
-  return loadFrom('blog').sort((a, b) => b.updated.localeCompare(a.updated));
+  return ALL_POSTS;
 }
 
 export function getPost(slug: string): Article | null {
-  return getPosts().find((p) => p.slug === slug) ?? null;
+  return POSTS_BY_SLUG.get(slug) ?? null;
 }
 
 export function getPostSlugs(): string[] {
-  return getPosts().map((p) => p.slug);
+  return ALL_POSTS.map((p) => p.slug);
 }
