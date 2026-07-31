@@ -1,9 +1,5 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import matter from 'gray-matter';
 import type { Sheet } from './formula-engine';
-
-const CONTENT_DIR = path.join(process.cwd(), 'content', 'formulas');
+import { FORMULAS } from './content-data.generated';
 
 export interface Mistake {
   level: 'error' | 'warning' | 'tip';
@@ -80,29 +76,27 @@ function toFormula(slug: string, data: Record<string, unknown>, body: string): F
   };
 }
 
+// Parsed once, at module load, from the bundled data — no disk access here
+// or anywhere below, which is what makes this safe to run inside a Worker.
+const ALL_FORMULAS: Formula[] = FORMULAS.map((f) =>
+  toFormula(f.slug, f.data as Record<string, unknown>, f.body)
+).sort((a, b) => a.name.localeCompare(b.name));
+
+const BY_SLUG = new Map(ALL_FORMULAS.map((f) => [f.slug, f]));
+
 export function getFormulaSlugs(): string[] {
-  if (!fs.existsSync(CONTENT_DIR)) return [];
-  return fs
-    .readdirSync(CONTENT_DIR)
-    .filter((f) => f.endsWith('.mdx'))
-    .map((f) => f.replace(/\.mdx$/, ''));
+  return ALL_FORMULAS.map((f) => f.slug);
 }
 
 export function getFormula(slug: string): Formula | null {
-  const file = path.join(CONTENT_DIR, `${slug}.mdx`);
-  if (!fs.existsSync(file)) return null;
-  const { data, content } = matter(fs.readFileSync(file, 'utf8'));
-  return toFormula(slug, data as Record<string, unknown>, content);
+  return BY_SLUG.get(slug) ?? null;
 }
 
 export function getAllFormulas(): Formula[] {
-  return getFormulaSlugs()
-    .map((s) => getFormula(s))
-    .filter((f): f is Formula => f !== null)
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return ALL_FORMULAS;
 }
 
 export function getCategories(): string[] {
-  const set = new Set(getAllFormulas().map((f) => f.category));
+  const set = new Set(ALL_FORMULAS.map((f) => f.category));
   return ['All', ...Array.from(set).sort()];
 }
