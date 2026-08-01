@@ -1,0 +1,19 @@
+# Normalise line endings so the repo always stores LF, while each working tree
+# keeps whatever its platform prefers. Without this, files uploaded through the
+# GitHub web UI arrived as CRLF and every file showed as modified with an empty
+# diff. Deliberately no eol= here -- that would force LF on disk and fight the
+# local core.autocrlf=true setting.
+* text=auto
+
+# Binaries git must never touch.
+*.xlsx binary
+*.xlsm binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary
+*.docx binary
