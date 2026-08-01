@@ -13,6 +13,10 @@ out/
 build/
 *.tsbuildinfo
 
+# Generated from content/ by scripts/build-content.js on every build.
+# Never edit by hand and never commit — edit the MDX instead.
+lib/content-data.generated.ts
+
 # Wrangler local state
 .wrangler/
 
