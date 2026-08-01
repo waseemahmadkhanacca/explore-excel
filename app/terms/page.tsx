@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Terms of use',
   description: 'The terms governing use of Explore Excel and its templates.',
   alternates: { canonical: '/terms/' },
-  robots: { index: true, follow: false },
+  robots: { index: true, follow: true },
 };
 
 export default function TermsPage() {
@@ -14,14 +14,8 @@ export default function TermsPage() {
       <span className="sec-lab">Legal</span>
       <h1>Terms of use</h1>
       <p className="lede">
-        Last updated 23 July 2026. Short, and written to be read rather than skipped.
+        Last updated 1 August 2026. Short, and written to be read rather than skipped.
       </p>
-
-      <div className="cal cal-warning">
-        <b>Have this reviewed before launch</b>
-        Written to be accurate about how the site works, but not legal advice. Terms need to
-        reflect where you are established and where you sell. See the note at the end.
-      </div>
 
       <h2 id="using">Using the site</h2>
       <p>
@@ -115,17 +109,6 @@ export default function TermsPage() {
         If something here is unclear or you think a template is wrong, say so on the{' '}
         <Link href="/contact/">contact page</Link>. Corrections are welcome and get acted on.
       </p>
-
-      <div className="cal cal-tip">
-        <b>For the site owner: what to get reviewed</b>
-        Two things. First, the governing law and jurisdiction clause, which this draft
-        deliberately omits because it depends on where you are established and where you
-        intend to enforce — a solicitor will add the right one in minutes. Second, if you
-        start selling, consumer law in the UK and EU gives buyers statutory rights including a
-        cooling-off period for digital goods, which has to be addressed explicitly. A merchant
-        of record such as Lemon Squeezy handles much of that for you, which is a good reason
-        to use one rather than taking card payments directly.
-      </div>
     </div>
   );
 }

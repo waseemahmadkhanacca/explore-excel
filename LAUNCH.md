@@ -154,6 +154,10 @@ Three things need professional review. They are cheap now and expensive later.
 
 **Tax.** VAT on digital goods sold to UK and EU consumers is owed where the customer is, not where you are. Using a merchant of record — Lemon Squeezy or Paddle — moves that obligation to them. This is the main reason to use one rather than taking card payments directly.
 
+**Governing law.** The Terms page deliberately doesn't name a governing law and jurisdiction — that depends on where you're established and where you'd actually want to enforce a dispute, and a solicitor adds the correct clause in minutes once that's settled.
+
+**Consumer rights on digital goods.** Once you sell anything, UK and EU consumer law gives buyers statutory rights including a cooling-off period for digital purchases, which needs to be addressed explicitly in your terms. A merchant of record such as Lemon Squeezy handles much of this for you.
+
 ---
 
 ## What happens next

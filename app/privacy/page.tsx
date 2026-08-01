@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Privacy policy',
   description: 'What data Explore Excel collects, why, and how to get it removed.',
   alternates: { canonical: '/privacy/' },
-  robots: { index: true, follow: false },
+  robots: { index: true, follow: true },
 };
 
 export default function PrivacyPage() {
@@ -14,17 +14,9 @@ export default function PrivacyPage() {
       <span className="sec-lab">Legal</span>
       <h1>Privacy policy</h1>
       <p className="lede">
-        Last updated 23 July 2026. This explains what is collected, why, and how to have it
+        Last updated 1 August 2026. This explains what is collected, why, and how to have it
         removed.
       </p>
-
-      <div className="cal cal-warning">
-        <b>Have this reviewed before launch</b>
-        This is written to be accurate about what the site actually does, but it is not legal
-        advice. Advertising networks impose their own disclosure requirements, and obligations
-        differ depending on where your readers are. See the note at the end for what to get
-        checked and where.
-      </div>
 
       <h2 id="who">Who is responsible</h2>
       <p>
@@ -113,7 +105,10 @@ export default function PrivacyPage() {
       </table>
       <p>
         Each processes data under its own terms. Because these services operate
-        internationally, your data may be processed outside your own country.
+        internationally, your data may be processed outside your own country, including
+        outside the UK and the European Economic Area. Where that happens, we rely on the
+        safeguards those providers have in place — standard contractual clauses or an
+        equivalent transfer mechanism set out in their own data processing terms.
       </p>
 
       <h2 id="retention">How long it is kept</h2>
@@ -144,6 +139,17 @@ export default function PrivacyPage() {
         thirty days and usually much sooner.
       </p>
 
+      <h3>Complaining to a regulator</h3>
+      <p>
+        If you are unhappy with how your data has been handled, you can complain to your data
+        protection authority. In the UK that is the Information Commissioner&apos;s Office at{' '}
+        <a href="https://ico.org.uk/" rel="noopener noreferrer" target="_blank">
+          ico.org.uk
+        </a>
+        . In the EU it is the supervisory authority in the country where you live. You are not
+        required to contact us first, though it is usually quicker if you do.
+      </p>
+
       <h2 id="legal-basis">Why we are allowed to hold it</h2>
       <p>
         For email, the basis is your consent, given by ticking the box when you requested a
@@ -163,19 +169,6 @@ export default function PrivacyPage() {
         change affects how your email address is used, subscribers will be told directly
         rather than expected to notice.
       </p>
-
-      <div className="cal cal-tip">
-        <b>For the site owner: what to get reviewed</b>
-        Three things need professional eyes before launch. First, whether a UK or EU
-        representative is required under GDPR Article 27 — this depends on the scale and
-        nature of processing, and a solo site with an email list is usually below the
-        threshold, but confirm it. Second, the cookie consent wording, which your advertising
-        network will specify. Third, the tax position once you sell anything, since VAT on
-        digital goods sold to EU and UK consumers is owed where the customer is. Using a
-        merchant of record such as Lemon Squeezy or Paddle moves that obligation to them, which
-        is the reason to choose one. An ICO-registered UK solicitor or a data protection
-        consultant can cover the first two in an hour; an accountant handles the third.
-      </div>
     </div>
   );
 }
