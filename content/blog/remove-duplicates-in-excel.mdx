@@ -1,0 +1,102 @@
+---
+slug: remove-duplicates-in-excel
+title: Four ways to remove duplicates, and when each is wrong
+category: Cleaning data
+summary: Remove Duplicates destroys data permanently and silently. Here is what it actually does, and the three alternatives that do not.
+description: The Remove Duplicates button deletes rows in place with no undo once saved. Compare it against UNIQUE, COUNTIF flagging and Power Query, and pick the one that suits the job.
+updated: 2026-08-01
+readingTime: 7
+related: [UNIQUE, COUNTIF, COUNTIFS, FILTER]
+---
+
+Removing duplicates sounds like a single operation with a single answer. It is not. There are four common approaches and they differ in a way that matters: some destroy data and some do not.
+
+## 1. The Remove Duplicates button
+
+Data tab, Remove Duplicates. It is the obvious choice and the one to be most careful with.
+
+What it actually does is delete rows from your sheet, in place, keeping the first occurrence of each duplicate and discarding the rest. Excel tells you how many it removed. It does not tell you which ones, and once the file is saved and closed there is no way back.
+
+Two specific traps:
+
+**It considers only the columns you tick.** Tick just the email column and it deletes rows that differ in every other respect but happen to share an address. That is sometimes what you want and often not.
+
+**Which row survives is arbitrary.** It keeps the first in current sort order. If you wanted the most recent record, or the one with the most complete data, Remove Duplicates has no way to know that and will not ask.
+
+<Callout type="warning" title="Copy the sheet first">
+Every time. Right-click the tab, Move or Copy, tick Create a copy. It takes three seconds and it is the difference between a mistake you can undo next week and one you cannot. Nobody regrets having the original.
+</Callout>
+
+## 2. UNIQUE
+
+On Excel 365 and 2021:
+
+<Formula>=UNIQUE(B2:B7)</Formula>
+
+This is the opposite approach. It leaves your data completely untouched and produces a live list of distinct values somewhere else. Add a row to the source and the list updates itself.
+
+Use it when the deduplicated list is an *output* — a summary, a dropdown source, a category list — rather than a correction to the underlying data.
+
+Wrap it in `SORT` to get an ordered list:
+
+<Formula>=SORT(UNIQUE(B2:B7))</Formula>
+
+And in `COUNTA` when you want the count rather than the list:
+
+<Formula>=COUNTA(UNIQUE(B2:B7))</Formula>
+
+The third argument does something different and useful: `=UNIQUE(B2:B7, FALSE, TRUE)` returns only values that appear *exactly once*, discarding anything repeated. That answers "which of these is a one-off", which is not the same question as "what are the distinct values".
+
+## 3. Flagging with COUNTIF
+
+When you need to *see* the duplicates before deciding anything:
+
+<Formula>=COUNTIF(A:A, A2)</Formula>
+
+Fill it down. Anything above 1 appears more than once. Now you can sort or filter on that column and look at the actual rows before removing anything.
+
+This is the right approach when the duplicates might be legitimate. Two orders from the same customer on the same day are not necessarily an error, and a script that deletes one of them is destroying a real transaction.
+
+For duplicates across several columns, join the values first:
+
+<Formula>=COUNTIFS(A:A, A2, B:B, B2)</Formula>
+
+<Callout type="tip" title="Conditional formatting uses this exact formula">
+The built-in Highlight Duplicate Values rule is a COUNTIF behind the scenes. Writing it yourself gives you the count rather than just the colour, which tells you whether something appears twice or two hundred times — a distinction the highlighting hides.
+</Callout>
+
+## 4. Power Query
+
+For anything that repeats. Get Data, load your source, right-click the column, Remove Duplicates, then Close and Load.
+
+The advantage is that the steps are recorded. When next month's file arrives, you refresh and every step re-runs in the same order. Remove Duplicates as a button has to be done by hand every single time, and the twentieth time is when someone forgets.
+
+Power Query also keeps the source file untouched, since it loads a transformed copy.
+
+## Choosing
+
+| Situation | Use |
+|---|---|
+| One-off cleanup, data is disposable | Remove Duplicates button |
+| You need a live distinct list | `UNIQUE` |
+| Duplicates might be legitimate | `COUNTIF` to flag, then look |
+| The same file arrives every month | Power Query |
+| You need the count, not the list | `COUNTA(UNIQUE(...))` or `SUMPRODUCT` |
+
+## The one that catches everyone
+
+Before removing anything, check for whitespace.
+
+<Formula>=LEN(A2)-LEN(TRIM(A2))</Formula>
+
+`"Northaero"` and `"Northaero "` are not duplicates as far as Excel is concerned, so Remove Duplicates leaves both and UNIQUE returns both. Your deduplicated list comes back longer than expected and looks like it did not work.
+
+It did work. The data is dirtier than it appears. Clean the whitespace first, then deduplicate — in that order, every time.
+
+## Before Excel 2021
+
+`UNIQUE` returns `#NAME?` in Excel 2019 and earlier. The count of distinct values without it is:
+
+<Formula>=SUMPRODUCT(1/COUNTIFS(B2:B7, B2:B7))</Formula>
+
+Each value contributes one divided by how many times it appears, so four identical entries contribute a quarter each and total one. It fails if the range contains blanks, because dividing by a count of zero is a division by zero.

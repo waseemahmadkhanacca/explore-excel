@@ -1,0 +1,101 @@
+---
+slug: sumif
+name: SUMIF
+category: Math
+summary: Add up the values that meet one condition
+description: SUMIF totals the cells in a range that meet a single condition. It is the function most people learn after SUM, and its argument order is the one thing about it that catches everybody out.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 6
+practiceFile: /downloads/budget-vs-actual.xlsx
+related: [SUMIFS, COUNTIF, AVERAGEIF, IF]
+syntax: '=SUMIF(range, criteria, [sum_range])'
+arguments:
+  - name: range
+    required: true
+    description: The cells to test against the condition.
+  - name: criteria
+    required: true
+    description: What to look for. A number, text in quotes, or a comparison such as ">5000".
+  - name: sum_range
+    required: false
+    description: The cells to actually add up. Leave it out and Excel adds the range itself.
+demo:
+  file: Regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Rep, Region, Product, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['Adams', 'North', 'Widget', 1200]
+    - ['Brown', 'South', 'Bracket', 450]
+    - ['Adams', 'North', 'Cable', 780]
+    - ['Clark', 'East', 'Widget', 1650]
+    - ['Brown', 'South', 'Sensor', 320]
+    - ['Davis', 'North', 'Widget', 990]
+  presets:
+    - label: Total one region
+      formula: '=SUMIF(B2:B7, "North", D2:D7)'
+    - label: Total one rep
+      formula: '=SUMIF(A2:A7, "Brown", D2:D7)'
+    - label: Only the large orders
+      formula: '=SUMIF(D2:D7, ">1000")'
+    - label: Everything except one region
+      formula: '=SUMIF(B2:B7, "<>North", D2:D7)'
+    - label: Names starting with B
+      formula: '=SUMIF(A2:A7, "B*", D2:D7)'
+mistakes:
+  - level: error
+    title: The argument order is not the same as SUMIFS
+    body: SUMIF puts the range to test first and the range to add last. SUMIFS puts the range to add first. Switching between them without noticing is the single most common cause of a wrong total, and because both return a number rather than an error, nothing tells you it happened.
+  - level: error
+    title: Forgetting sum_range when the ranges differ
+    body: '=SUMIF(B2:B7, "North") adds up column B itself, which is text, so the answer is zero. Whenever you test one column and total another, the third argument is required.'
+  - level: warning
+    title: A comparison against a cell needs joining
+    body: To total everything above whatever is in F1, write ">"&F1. Writing ">F1" searches for the literal text F1 and quietly totals nothing.
+  - level: warning
+    title: sum_range is aligned by position, not by address
+    body: If range is B2:B7 and sum_range is written as D2:D5, Excel silently extends it to six rows to match. The total looks plausible and is wrong. Keep both ranges the same height.
+faq:
+  - q: What is the difference between SUMIF and SUMIFS?
+    a: SUMIF takes one condition, SUMIFS takes up to 127. The arguments are also in a different order — SUMIFS puts the sum range first. Use SUMIFS for everything, even single conditions, and the ordering trap disappears.
+  - q: Can SUMIF use two conditions?
+    a: Not directly. Either switch to SUMIFS, or add two SUMIF formulas together for an OR, since separate SUMIFs total separate groups.
+  - q: Why does my SUMIF return zero?
+    a: The criteria never matched. Test with COUNTIF first — if the count is zero the sum will be too. The usual culprits are trailing spaces, numbers stored as text, and a spelling difference.
+  - q: Does SUMIF work with wildcards?
+    a: Yes. An asterisk matches any run of characters and a question mark matches exactly one, so "B*" totals every name beginning with B. To match a literal asterisk, put a tilde in front of it.
+  - q: Is SUMIF case sensitive?
+    a: No. "north" and "North" are treated as the same. If case matters you need SUMPRODUCT with EXACT instead.
+---
+
+## Examples
+
+### 1. Total one category
+
+The everyday use. Test the region column, add the amount column.
+
+<Formula>=SUMIF(B2:B7, "North", D2:D7)</Formula>
+
+Read it as a sentence: look through B, find "North", add the matching cells from D.
+
+### 2. Total by comparison
+
+When the test is on the same column you are adding, the third argument is unnecessary.
+
+<Formula>=SUMIF(D2:D7, ">1000")</Formula>
+
+This is the one case where two arguments is correct rather than a bug. The range being tested and the range being added are the same cells.
+
+<Callout type="warning" title="The argument order really does differ">
+`SUMIF(test, criteria, add)` but `SUMIFS(add, test, criteria)`. The two functions take their ranges in opposite orders, and both return a number either way. Nothing warns you. If you write SUMIFS by default you never have to think about it.
+</Callout>
+
+### 3. Everything except
+
+The `<>` operator means "not equal to".
+
+<Formula>=SUMIF(B2:B7, "<>North", D2:D7)</Formula>
+
+Useful for a residual line on a report — total everything, then everything in the main category, then this for the remainder as a cross-check that the three reconcile.

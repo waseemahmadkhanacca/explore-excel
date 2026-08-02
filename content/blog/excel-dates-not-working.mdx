@@ -1,0 +1,106 @@
+---
+slug: excel-dates-not-working
+title: Why Excel dates go wrong, and how to fix them for good
+category: Cleaning data
+summary: Dates that will not sort, will not filter and will not calculate are almost always text. Here is how to tell in one second and fix a whole column in one step.
+description: Excel stores dates as numbers. When a date is stored as text instead, sorting, filtering and every date function silently fail. How to identify it, convert it, and stop it happening again.
+updated: 2026-08-01
+readingTime: 7
+related: [DATEDIF, EOMONTH, NETWORKDAYS, WEEKDAY]
+---
+
+Dates cause more quiet errors than anything else in Excel, and almost all of them come from one fact that is easy to forget: **Excel does not store dates as dates.** It stores them as numbers, and applies a format that makes them look like dates.
+
+15 January 2026 is stored as `46037` — the number of days since 30 December 1899. The format is a mask over the number.
+
+Once you know that, most date problems explain themselves.
+
+## The one-second test
+
+Select a column of dates and look at the alignment. Excel right-aligns numbers and left-aligns text, by default.
+
+**Dates hugging the left edge are text.** They will not sort, will not filter into date groups, and every date function will refuse them.
+
+To be certain:
+
+<Formula>=ISNUMBER(A2)</Formula>
+
+`TRUE` means Excel has a real date. `FALSE` means you have a string that looks like one.
+
+<Callout type="tip" title="Widen the column before you judge">
+A date that appears centred might just be in a narrow column. Widen it first — the alignment only tells you something once there is room for the value to sit where it wants to.
+</Callout>
+
+## Why it happens
+
+Almost always because the data came from somewhere else. CSV exports, accounting systems, web downloads and copy-paste from a browser all produce text that resembles dates.
+
+It also happens when the file's regional format disagrees with the data. A file containing `03/04/2026` opened on a machine set to UK format is 3 April. On a machine set to US format it is 4 March. If Excel cannot resolve a value under the current setting — `13/04/2026` on a US machine, say — it gives up and leaves it as text.
+
+That last case is the dangerous one, because *some* rows convert and some do not. You end up with a column that is half real dates and half text, sorted into an order that makes no sense, and nothing in the interface warns you.
+
+## Fixing a whole column
+
+### Text to Columns — the fastest fix
+
+Counter-intuitive but it works better than anything else.
+
+1. Select the column
+2. Data tab, Text to Columns
+3. Next, Next
+4. Under Column data format, choose Date and pick the order the text is actually in — DMY for `15/01/2026`
+5. Finish
+
+Excel re-parses every cell. Picking the correct order in step 4 is what makes this reliable where other methods guess.
+
+### DATEVALUE — when the text is consistent
+
+<Formula>=DATEVALUE(A2)</Formula>
+
+Returns the serial number, which you then format as a date. It respects your regional settings, so it fails on data in a different order from your system's.
+
+### DATE with the parts pulled out — when nothing else works
+
+For stubborn formats, take the pieces apart:
+
+<Formula>=DATE(MID(A2, 7, 4), MID(A2, 4, 2), LEFT(A2, 2))</Formula>
+
+Reading `15/01/2026`: characters 7 to 10 are the year, 4 and 5 the month, the first two the day. `DATE` assembles them into a real date regardless of what your regional settings think.
+
+Ugly, but it handles anything, including formats Excel has never seen.
+
+## The other symptom: a date showing as a number
+
+The reverse problem. A cell shows `46037` where you expected a date.
+
+This is a formatting issue, not a data issue, and the data is fine. Select the cells and press `Ctrl` `Shift` `3`, or set a date format from the Format Cells dialogue.
+
+It commonly appears after a date function, because functions like `EOMONTH` and `EDATE` return the serial number and inherit no formatting from anywhere.
+
+## Dates in formulas
+
+Never type a date as text inside a formula:
+
+```
+=COUNTIFS(A2:A100, ">01/01/2026")
+```
+
+That compares against a string and depends entirely on regional settings. Use `DATE` instead:
+
+```
+=COUNTIFS(A2:A100, ">="&DATE(2026,1,1))
+```
+
+Note the ampersand. The operator and the value have to be joined into one string — writing `">=DATE(2026,1,1)"` searches for that literal text.
+
+## Two behaviours that look like bugs
+
+**Times are the decimal part.** `46037.5` is midday on 15 January. A "date" that will not match another identical-looking date often has a time component hiding behind the format. `=INT(A2)` strips it.
+
+**1900 is treated as a leap year.** It was not. Excel contains a deliberate error, kept since 1985 for compatibility with Lotus 1-2-3, which means dates before 1 March 1900 are off by one day. It is almost never relevant, but it is real, and it is why date arithmetic on nineteenth-century dates gives odd answers.
+
+## Stopping it happening again
+
+If the same export arrives every month, load it through Power Query rather than opening the CSV directly. Set the column type to Date once, and every future refresh applies the same parsing with the same locale. That removes the human step where somebody opens a CSV, gets a column of text, and does not notice.
+
+For one-off files, make the alignment check a habit. It takes a second and it catches the problem before you have built anything on top of it.

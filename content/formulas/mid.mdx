@@ -1,0 +1,97 @@
+---
+slug: mid
+name: MID
+category: Text
+summary: Pull characters out of the middle of a cell
+description: MID returns a run of characters from anywhere inside a piece of text. Paired with FIND it becomes the standard way to split codes, references and imported strings that arrive as one column.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 6
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [LEFT, LEN, FIND, SUBSTITUTE]
+syntax: '=MID(text, start_num, num_chars)'
+arguments:
+  - name: text
+    required: true
+    description: The cell or text to take characters from.
+  - name: start_num
+    required: true
+    description: Which character to start at, counting from 1. Not from 0.
+  - name: num_chars
+    required: true
+    description: How many characters to take. Asking for more than remain returns what is there, without an error.
+demo:
+  file: Product codes.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Description, Supplier, Price]
+  editable: [1, 2]
+  money: [3]
+  rows:
+    - ['NA-1042-X', 'Widget, small', 'Northaero', 24.5]
+    - ['NA-1043-X', 'Widget, large', 'Northaero', 31.75]
+    - ['SE-2210-B', 'Bracket', 'Southend', 8.2]
+    - ['SE-2211-B', 'Cable, 2m', 'Southend', 15.4]
+    - ['WM-3355-C', 'Sensor', 'Westmoor', 112.0]
+    - ['WM-3356-C', 'Adapter', 'Westmoor', 19.9]
+  presets:
+    - label: The number in the middle
+      formula: '=MID(A2, 4, 4)'
+    - label: The prefix
+      formula: '=MID(A2, 1, 2)'
+    - label: The final letter
+      formula: '=MID(A2, 9, 1)'
+    - label: Last character, whatever the length
+      formula: '=MID(A2, LEN(A2), 1)'
+    - label: Everything after the comma
+      formula: '=MID(B2, FIND(",", B2) + 2, 20)'
+mistakes:
+  - level: error
+    title: Counting from zero
+    body: The first character is position 1, not position 0. Anyone arriving from a programming language gets this wrong once. A start_num of 0 returns #VALUE!, so at least it fails loudly.
+  - level: warning
+    title: Hard-coding a position that varies
+    body: '=MID(A2, 4, 4) works only while every code has its number in the same place. The moment a supplier sends a code with a different prefix length, every row is silently wrong. Use FIND to locate the separator instead.'
+  - level: warning
+    title: Asking for more characters than exist
+    body: MID returns what it can rather than an error, which is convenient and also means a truncated result looks like a correct one. If the length matters, check it with LEN.
+  - level: warning
+    title: The result is text, even when it looks like a number
+    body: '=MID(A2, 4, 4) gives "1042" as text, so it will not match 1042 stored as a number in a lookup. Wrap it in VALUE when the result needs to be numeric.'
+faq:
+  - q: What is the difference between MID, LEFT and RIGHT?
+    a: LEFT takes from the start, RIGHT takes from the end, MID takes from anywhere. MID with a start_num of 1 is the same as LEFT, so MID can do all three jobs if you would rather remember one function.
+  - q: How do I extract text between two characters?
+    a: Use FIND twice. Start after the first separator, and take the difference between the two positions as the length — MID(A2, FIND("-",A2)+1, FIND("-",A2,FIND("-",A2)+1)-FIND("-",A2)-1). It is unpleasant to read, which is why Excel 365 added TEXTBEFORE and TEXTAFTER.
+  - q: Why is my MID result not matching in a lookup?
+    a: MID always returns text. If the lookup table holds real numbers, "1042" and 1042 are different values. Wrap the MID in VALUE to convert it.
+  - q: How do I get the last character of a cell?
+    a: '=MID(A2, LEN(A2), 1), or more simply =RIGHT(A2, 1). The MID version is useful when you need the last few characters starting from a computed position.'
+  - q: Should I use Text to Columns instead?
+    a: For a one-off split, yes — it is faster and needs no formula. Use MID when the source data will be refreshed, because a formula re-runs itself and Text to Columns has to be repeated by hand every time.
+---
+
+## Examples
+
+### 1. Taking a fixed section
+
+Every SKU here follows the same shape, so the position is predictable.
+
+<Formula>=MID(A2, 4, 4)</Formula>
+
+Start at character 4, take 4 characters. Counting starts at 1, so character 4 is the first digit after the hyphen.
+
+### 2. Using LEN to reach the end
+
+<Formula>=MID(A2, LEN(A2), 1)</Formula>
+
+The last character, regardless of how long the code is. Computing the position rather than typing it is what makes a formula survive contact with new data.
+
+<Callout type="warning" title="Fixed positions are a trap">
+`=MID(A2, 4, 4)` is correct for every row in this sheet, and will break the first time a code arrives with a two-letter prefix instead of three, or a longer number. It will not error — it will return the wrong characters, quietly, on some rows and not others. Find the separator rather than assuming its position.
+</Callout>
+
+### 3. Finding the position instead of assuming it
+
+<Formula>=MID(B2, FIND(",", B2) + 2, 20)</Formula>
+
+FIND locates the comma, the `+ 2` steps past the comma and the space that follows, and 20 is simply more characters than any description here needs. This survives descriptions of any length, which the fixed-position version does not.

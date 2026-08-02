@@ -7,7 +7,6 @@ description: FILTER returns every row matching a condition, spilling the results
 versions: [Excel 365, Excel 2021]
 updated: 2026-07-23
 readingTime: 6
-video: https://www.youtube.com/watch?v=PLACEHOLDER
 practiceFile: /downloads/kpi-dashboard.xlsx
 related: [UNIQUE, SORT, COUNTIFS, IFERROR]
 syntax: '=FILTER(array, include, [if_empty])'
@@ -35,14 +34,16 @@ demo:
     - ['#1045', 'East', 'Closed', 7300]
     - ['#1046', 'North', 'Closed', 4880]
   presets:
-    - label: Count what matches
-      formula: '=COUNTIFS(B2:B7, "North")'
-    - label: Total the matches
-      formula: '=SUMIFS(D2:D7, B2:B7, "North")'
-    - label: Two conditions
-      formula: '=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")'
-    - label: Largest match
-      formula: '=MAXIFS(D2:D7, B2:B7, "North")'
+    - label: Filter to one region
+      formula: '=FILTER(A2:A7, B2:B7="North")'
+    - label: Filter by amount
+      formula: '=FILTER(A2:A7, D2:D7>9000)'
+    - label: Return the amounts
+      formula: '=FILTER(D2:D7, C2:C7="Closed")'
+    - label: No match, with a message
+      formula: '=FILTER(A2:A7, B2:B7="West", "No orders")'
+    - label: Total what it returns
+      formula: '=SUM(FILTER(D2:D7, B2:B7="North"))'
 mistakes:
   - level: error
     title: Not available before Excel 2021
@@ -57,8 +58,8 @@ mistakes:
     title: The condition must be the same height as the array
     body: Filtering A2:D7 with a condition built on B2:B8 gives #VALUE!. The condition produces one TRUE or FALSE per row and there has to be exactly one per row of the array.
 faq:
-  - q: Why does the demo above use SUMIFS rather than FILTER?
-    a: This interactive grid evaluates one formula into one cell. FILTER produces a spilled range of many cells, which the grid cannot show. The presets demonstrate the equivalent aggregate answers. Try FILTER itself in Excel.
+  - q: How do I filter and total in one step?
+    a: Wrap it. =SUM(FILTER(D2:D7, B2:B7="North")) hands the filtered rows straight to SUM. This is often clearer than SUMIFS once the condition gets complicated, because the condition reads as a condition rather than as alternating range and criteria arguments.
   - q: How do I filter on two conditions?
     a: Multiply them. FILTER(A2:D7,(B2:B7="North")*(C2:C7="Closed")) is AND. Add them with a plus sign for OR. Multiplication converts TRUE and FALSE to 1 and 0.
   - q: Can FILTER return only some columns?
@@ -73,15 +74,17 @@ faq:
 
 ### 1. Filtering one column
 
-<Formula>=SUMIFS(D2:D7, B2:B7, "North")</Formula>
+<Formula>=FILTER(A2:A7, B2:B7="North")</Formula>
 
-The interactive grid above shows aggregates because it evaluates a single formula into a single cell. In Excel, `=FILTER(A2:D7, B2:B7="North")` would return the four matching rows in full, spilling down from wherever you type it.
+Try it in the grid above. Four orders come back, spilled one under another. In Excel you would normally point the first argument at the whole table — `=FILTER(A2:D7, B2:B7="North")` — and get all four columns of every matching row.
+
+The condition is not a criteria string like SUMIFS wants. It is an ordinary comparison that produces TRUE or FALSE for each row, which is why it reads the way you would say it out loud.
 
 ### 2. Two conditions
 
-<Formula>=SUMIFS(D2:D7, B2:B7, "North", C2:C7, "Closed")</Formula>
+`=FILTER(A2:D7, (B2:B7="North")*(C2:C7="Closed"))`
 
-The FILTER equivalent multiplies the conditions: `=FILTER(A2:D7, (B2:B7="North")*(C2:C7="Closed"))`. Multiplication is AND because TRUE times TRUE is 1 and anything times FALSE is 0.
+Multiplication is AND, because TRUE times TRUE is 1 and anything times FALSE is 0. Addition is OR. Note that each condition needs its own brackets — leave them out and the arithmetic binds in the wrong order.
 
 <Callout type="tip" title="AND and OR in dynamic arrays">
 Multiply for AND, add for OR. `(B2:B7="North")+(B2:B7="South")` returns rows from either region. It looks strange the first time — you are doing arithmetic on logic — but it is the standard idiom and worth recognising.

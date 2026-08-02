@@ -1,0 +1,111 @@
+---
+slug: excel-keyboard-shortcuts
+title: The Excel shortcuts that are actually worth learning
+category: Working faster
+summary: Thirty shortcuts ranked by how much time they save, not by how many exist. Most lists are padded. This one is not.
+description: A short, ranked list of the Excel keyboard shortcuts that genuinely change how fast you work, grouped by what you are trying to do, with the Mac equivalents.
+updated: 2026-08-01
+readingTime: 7
+related: [SUMIFS, XLOOKUP, TRIM]
+---
+
+Most shortcut lists contain two hundred entries. Nobody learns two hundred shortcuts. The useful set is about thirty, and perhaps eight of those account for the majority of the time you will save.
+
+They are grouped below by what you are actually trying to do. Mac equivalents are in brackets where they differ.
+
+## The eight that matter most
+
+If you learn nothing else, learn these.
+
+**`Ctrl` `↓` — jump to the bottom of the data.** Hold `Shift` as well to select everything on the way. This is how you stop scrolling. On a ten thousand row sheet it is the difference between a second and a minute.
+
+**`Ctrl` `Shift` `↓` — select to the end of the column.** The single most useful selection shortcut. Combined with `Ctrl` `Shift` `→` it selects an entire block of data instantly.
+
+**`F4` — repeat the last action, or cycle absolute references.** Two entirely different jobs depending on whether you are editing a formula. Inside a formula it toggles `A1` to `$A$1` to `A$1` to `$A1`. Outside one, it repeats whatever you just did — insert a row, apply a fill, delete a column.
+
+**`Ctrl` `;` — insert today's date.** As a static value, not a formula. `Ctrl` `Shift` `;` gives the time.
+
+**`Alt` `=` — AutoSum.** Excel guesses the range, and guesses correctly most of the time. Check it before pressing Enter.
+
+**`Ctrl` `Shift` `V` — paste special.** Or `Ctrl` `Alt` `V` on Windows for the full dialogue. Pasting values over formulas is something you will do many times a day.
+
+**`Ctrl` `T` — turn a range into a Table.** Tables extend their own formulas, keep their own headers visible, and give you named references that do not break when rows are inserted.
+
+**`F2` — edit the cell without retyping it.** Puts the cursor at the end of the existing contents instead of overwriting them. Double-clicking does the same thing but requires finding the cell with the mouse first.
+
+<Callout type="tip" title="The one to build a habit around">
+`Ctrl` `Shift` `↓`. Almost everything else you do to a column starts with selecting it, and almost everyone does that by clicking the header — which also selects the million empty rows underneath, quietly bloating the file and slowing every calculation.
+</Callout>
+
+## Moving around
+
+| Shortcut | What it does |
+|---|---|
+| `Ctrl` `↓` `↑` `←` `→` | Jump to the edge of the current block of data |
+| `Ctrl` `Home` | Back to A1 |
+| `Ctrl` `End` | To the last used cell — useful for finding stray data |
+| `Ctrl` `Page Down` | Next worksheet |
+| `Ctrl` `G` | Go to a specific cell or range |
+| `Ctrl` `F` | Find |
+
+`Ctrl` `End` is worth knowing for a specific reason: if it takes you somewhere far below your actual data, your file is bigger than it needs to be. Delete the empty rows properly and save, and the file often shrinks dramatically.
+
+## Selecting
+
+| Shortcut | What it does |
+|---|---|
+| `Ctrl` `Shift` `↓` | Select down to the last filled cell |
+| `Ctrl` `Shift` `→` | Select across to the last filled cell |
+| `Ctrl` `A` | Select the current block, then the whole sheet |
+| `Ctrl` `Space` | Select the whole column |
+| `Shift` `Space` | Select the whole row |
+
+## Editing
+
+| Shortcut | What it does |
+|---|---|
+| `F2` | Edit in place |
+| `Ctrl` `D` | Fill down from the cell above |
+| `Ctrl` `R` | Fill right from the cell to the left |
+| `Ctrl` `Enter` | Fill the whole selection with what you just typed |
+| `Alt` `Enter` | Line break inside a cell |
+| `Ctrl` `-` | Delete row or column |
+| `Ctrl` `Shift` `+` | Insert row or column |
+
+`Ctrl` `Enter` deserves attention. Select a range, type a formula, press `Ctrl` `Enter` instead of `Enter`, and it fills the entire selection at once. No dragging, no double-clicking the fill handle, no risk of missing the last row.
+
+## Formatting
+
+| Shortcut | What it does |
+|---|---|
+| `Ctrl` `1` | Format Cells dialogue |
+| `Ctrl` `B` `I` `U` | Bold, italic, underline |
+| `Ctrl` `Shift` `1` | Number format with two decimals |
+| `Ctrl` `Shift` `4` | Currency |
+| `Ctrl` `Shift` `5` | Percentage |
+| `Ctrl` `Shift` `3` | Date |
+
+The number-format ones follow the symbols on those keys — `4` is `$`, `5` is `%`. That is the mnemonic.
+
+## Formulas
+
+| Shortcut | What it does |
+|---|---|
+| `F4` | Cycle `$` on the reference under the cursor |
+| `Alt` `=` | AutoSum |
+| `Ctrl` `` ` `` | Show all formulas instead of results |
+| `F9` | Evaluate the selected part of a formula |
+
+`F9` is the debugging tool almost nobody knows. Select a fragment of a formula in the formula bar, press `F9`, and Excel replaces it with what it evaluates to. You can see exactly which part is returning the wrong thing. Press `Escape` — not Enter — to put the formula back.
+
+`Ctrl` `` ` `` (the backtick, left of `1`) toggles the whole sheet between showing results and showing formulas. It is the fastest way to audit a sheet somebody else built.
+
+## On a Mac
+
+Most `Ctrl` shortcuts become `Cmd`. The exceptions worth knowing: `F4` is often `Cmd` `T` for reference cycling, and function keys may need `Fn` held down depending on your keyboard settings.
+
+## How to actually learn them
+
+Pick two a week. Use them deliberately even when reaching for the mouse would be faster, which it will be at first. After about a fortnight they stop being shortcuts you remember and start being how you use Excel.
+
+Trying to learn thirty at once does not work, which is why the lists of two hundred are worse than useless — they look comprehensive and teach nothing.

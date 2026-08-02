@@ -1,0 +1,92 @@
+---
+slug: countif
+name: COUNTIF
+category: Math
+summary: Count the cells that meet one condition
+description: COUNTIF counts how many cells in a range meet a single condition. It is the fastest way to answer how many, and the quickest way to find out why a SUMIF or a lookup is returning nothing.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 6
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [COUNTIFS, SUMIF, AVERAGEIF, UNIQUE]
+syntax: '=COUNTIF(range, criteria)'
+arguments:
+  - name: range
+    required: true
+    description: The cells to look through.
+  - name: criteria
+    required: true
+    description: What to count. A number, text in quotes, or a comparison such as ">100".
+demo:
+  file: Regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Rep, Region, Product, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['Adams', 'North', 'Widget', 1200]
+    - ['Brown', 'South', 'Bracket', 450]
+    - ['Adams', 'North', 'Cable', 780]
+    - ['Clark', 'East', 'Widget', 1650]
+    - ['Brown', 'South', 'Sensor', 320]
+    - ['Davis', 'North', 'Widget', 990]
+  presets:
+    - label: Count one region
+      formula: '=COUNTIF(B2:B7, "North")'
+    - label: Count one product
+      formula: '=COUNTIF(C2:C7, "Widget")'
+    - label: Orders over 1000
+      formula: '=COUNTIF(D2:D7, ">1000")'
+    - label: How many are not North
+      formula: '=COUNTIF(B2:B7, "<>North")'
+    - label: Find the duplicates
+      formula: '=COUNTIF(A2:A7, "Adams")'
+mistakes:
+  - level: error
+    title: Counting a value that is stored as text
+    body: A range where numbers arrived from another system as text will not match ">1000", because text is never greater than a number. The cells look identical on screen. Check one with ISNUMBER before trusting the count.
+  - level: warning
+    title: A comparison against a cell needs joining
+    body: To count values above whatever is in F1, write ">"&F1. Writing ">F1" looks for the literal text F1 and returns zero, with no indication anything is wrong.
+  - level: warning
+    title: Trailing spaces make near-duplicates
+    body: '"North" and "North " are different values, so a count that should be four comes back as three. Exported data carries trailing spaces constantly. TRIM the data, not the formula, so the fix stays fixed.'
+  - level: warning
+    title: COUNTIF only takes one condition
+    body: There is no way to add a second test. COUNTIFS handles up to 127 and takes its arguments in the same order, so moving to it costs nothing.
+faq:
+  - q: What is the difference between COUNTIF and COUNTIFS?
+    a: COUNTIF takes one condition and COUNTIFS takes many. Unlike SUMIF and SUMIFS the argument order is identical, so switching is safe. Use COUNTIFS by default.
+  - q: How do I count duplicates?
+    a: Put =COUNTIF(A:A, A2) beside the first row and fill it down. Anything showing more than one appears more than once. Conditional formatting uses exactly this formula behind its duplicate-values rule.
+  - q: How do I count cells that are not empty?
+    a: Use COUNTA, which counts everything with anything in it. COUNTIF with "<>" does something subtly different and will surprise you on cells holding a formula that returns an empty string.
+  - q: Can COUNTIF count across two columns?
+    a: Not in one call. Add two COUNTIFs together, or use COUNTIFS if the conditions apply to the same rows.
+  - q: Why is my COUNTIF result too high?
+    a: Wildcards. Criteria of "North*" also counts "Northern" and "North East". If you need an exact match, do not use an asterisk or a question mark.
+---
+
+## Examples
+
+### 1. How many match
+
+<Formula>=COUNTIF(B2:B7, "North")</Formula>
+
+Three orders. The most common use of COUNTIF is not reporting at all — it is checking that a value exists before you build something on top of it.
+
+### 2. Counting by comparison
+
+<Formula>=COUNTIF(D2:D7, ">1000")</Formula>
+
+Comparisons go inside the quotes, operator and all. This is the part people get wrong: the whole condition is one text string, not a formula.
+
+<Callout type="tip" title="Debug a broken SUMIF with COUNTIF">
+When a SUMIF returns zero, run COUNTIF with the same range and criteria. A count of zero means the criteria never matched and the problem is in your data. A count above zero means the criteria are fine and the problem is in your sum_range. It takes ten seconds and saves a lot of staring.
+</Callout>
+
+### 3. Finding duplicates
+
+<Formula>=COUNTIF(A2:A7, "Adams")</Formula>
+
+Adams appears twice. In a real sheet you would compare each row against the whole column rather than typing a name — `=COUNTIF(A:A, A2)` filled down flags every repeat at once.

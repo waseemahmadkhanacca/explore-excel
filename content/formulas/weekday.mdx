@@ -1,0 +1,102 @@
+---
+slug: weekday
+name: WEEKDAY
+category: Date
+summary: Find which day of the week a date falls on
+description: WEEKDAY turns a date into a number representing its day of the week. It is how you flag weekend work, drive a rota, or count how many Mondays fall in a period — and its second argument is where most of the confusion lives.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 6
+practiceFile: /downloads/timesheet.xlsx
+related: [NETWORKDAYS, EOMONTH, DATEDIF, IF]
+syntax: '=WEEKDAY(serial_number, [return_type])'
+arguments:
+  - name: serial_number
+    required: true
+    description: The date to test. A cell holding a real date, not text that looks like one.
+  - name: return_type
+    required: false
+    description: Which day counts as 1. Omitted or 1 means Sunday is 1. Type 2 means Monday is 1, which is what most people actually want.
+demo:
+  file: Shift log.xlsx
+  columns: [A, B, C, D]
+  headers: [Shift, Date, Engineer, Hours]
+  editable: [3]
+  dates: [1]
+  rows:
+    - ['SH-01', 46027, 'Adams', 8]
+    - ['SH-02', 46028, 'Brennan', 7.5]
+    - ['SH-03', 46032, 'Adams', 6]
+    - ['SH-04', 46033, 'Raman', 9]
+    - ['SH-05', 46037, 'Okafor', 8]
+    - ['SH-06', 46039, 'Adams', 5.5]
+  presets:
+    - label: Default, Sunday is 1
+      formula: '=WEEKDAY(B2)'
+    - label: Monday is 1
+      formula: '=WEEKDAY(B2, 2)'
+    - label: A Saturday, Monday-based
+      formula: '=WEEKDAY(B4, 2)'
+    - label: The same Saturday, Sunday-based
+      formula: '=WEEKDAY(B4)'
+    - label: Is it a weekend
+      formula: '=IF(WEEKDAY(B4, 2) > 5, "Weekend", "Weekday")'
+    - label: Count the weekend shifts
+      formula: '=SUMPRODUCT((WEEKDAY(B2:B7, 2) > 5) * 1)'
+mistakes:
+  - level: error
+    title: The default is Sunday, not Monday
+    body: With no second argument, Sunday returns 1 and Saturday returns 7. Almost every business week starts on Monday, so almost every WEEKDAY formula should pass 2 as the second argument. Omitting it is the most common error in this function.
+  - level: warning
+    title: Testing for a weekend with the wrong numbers
+    body: With return_type 2, the weekend is 6 and 7. With the default, it is 1 and 7. A rule written for one and used with the other misclassifies two days a week and looks fine on a spot check.
+  - level: warning
+    title: Dates stored as text return #VALUE!
+    body: WEEKDAY needs a real date. A cell holding "15/01/2026" as text fails. Dates imported from other systems are text far more often than they look it — a date sitting on the left of its cell rather than the right is the giveaway.
+  - level: warning
+    title: Assuming it knows about public holidays
+    body: WEEKDAY only knows about the seven-day cycle. Christmas Day on a Thursday is a weekday as far as it is concerned. For working days that account for holidays, use NETWORKDAYS with a holiday list.
+faq:
+  - q: How do I check whether a date is a weekend?
+    a: '=IF(WEEKDAY(A2, 2) > 5, "Weekend", "Weekday"). With return_type 2, Saturday is 6 and Sunday is 7, so anything above 5 is the weekend. This reads more clearly than testing the default numbering.'
+  - q: What does the return_type argument actually change?
+    a: Only which day is numbered 1. Type 1 or omitted starts on Sunday, type 2 starts on Monday, type 3 starts on Monday but counts from 0. The date itself is unaffected — you are choosing a numbering scheme.
+  - q: How do I get the day name rather than a number?
+    a: Use TEXT — =TEXT(A2,"dddd") returns Monday, and "ddd" returns Mon. WEEKDAY gives you a number to calculate with, TEXT gives you a label to read.
+  - q: How do I count how many Mondays are in a range?
+    a: '=SUMPRODUCT((WEEKDAY(A2:A100, 2) = 1) * 1). SUMPRODUCT applies WEEKDAY to every date and adds up the TRUEs. Multiplying by 1 converts TRUE and FALSE into 1 and 0.'
+  - q: Why does my rota highlight the wrong days?
+    a: Nearly always the missing second argument. A conditional formatting rule written as =WEEKDAY($A2)>5 flags Saturday and Sunday only if you meant the Sunday-first numbering. Add the 2 and the rule matches the week most people work.
+---
+
+## Examples
+
+### 1. The default numbering
+
+<Formula>=WEEKDAY(B2)</Formula>
+
+Row 2 is Monday 5 January 2026, and this returns 2 — because with no second argument, Sunday is day 1.
+
+### 2. Starting the week on Monday
+
+<Formula>=WEEKDAY(B2, 2)</Formula>
+
+The same date now returns 1. This is the numbering nearly every business actually uses, and passing `2` should be your default habit.
+
+<Callout type="warning" title="The second argument is not optional in practice">
+Leaving it out is legal and gives you an American week starting on Sunday. Every downstream test — weekend flags, rota colouring, "is this day 1 of the week" — then has to be written against that numbering. Pass `2` every time and the numbers line up with how you think about the week.
+</Callout>
+
+### 3. Flagging the weekend
+
+<Formula>=IF(WEEKDAY(B4, 2) > 5, "Weekend", "Weekday")</Formula>
+
+Row 4 is Saturday 10 January. With Monday-based numbering, Saturday is 6 and Sunday is 7, so "greater than 5" is the whole test.
+
+Switch the same date to the default numbering and Saturday becomes 7 while Sunday becomes 1 — which is why a weekend test written for one scheme quietly misclassifies days under the other.
+
+### 4. Counting weekend shifts
+
+<Formula>=SUMPRODUCT((WEEKDAY(B2:B7, 2) > 5) * 1)</Formula>
+
+SUMPRODUCT applies WEEKDAY down the whole column and totals the results. The `* 1` converts each TRUE into a 1 so they can be added — a pattern worth recognising, because it turns any row-by-row test into a count.

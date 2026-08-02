@@ -7,7 +7,6 @@ description: SORT returns a sorted copy of a range, spilling into the cells belo
 versions: [Excel 365, Excel 2021]
 updated: 2026-07-23
 readingTime: 5
-video: https://www.youtube.com/watch?v=PLACEHOLDER
 practiceFile: /downloads/kpi-dashboard.xlsx
 related: [FILTER, UNIQUE, MAXIFS, INDEX]
 syntax: '=SORT(array, [sort_index], [sort_order], [by_col])'
@@ -38,14 +37,14 @@ demo:
     - ['#1045', 'East', 'Closed', 7300]
     - ['#1046', 'North', 'Closed', 4880]
   presets:
-    - label: Largest value
-      formula: '=MAX(D2:D7)'
-    - label: Smallest value
-      formula: '=MIN(D2:D7)'
-    - label: Largest in the North
-      formula: '=MAXIFS(D2:D7, B2:B7, "North")'
-    - label: Which order is largest
-      formula: '=INDEX(A2:A7, MATCH(MAX(D2:D7), D2:D7, 0))'
+    - label: Sort amounts low to high
+      formula: '=SORT(D2:D7)'
+    - label: Sort amounts high to low
+      formula: '=SORT(D2:D7, 1, -1)'
+    - label: Sort regions A to Z
+      formula: '=SORT(B2:B7)'
+    - label: Sort only the closed orders
+      formula: '=SORT(FILTER(D2:D7, C2:C7="Closed"), 1, -1)'
 mistakes:
   - level: error
     title: Not available before Excel 2021
@@ -60,8 +59,8 @@ mistakes:
     title: Sorting a range that includes headers
     body: Include the header row in the array and it gets sorted along with the data, usually ending up somewhere in the middle. Start the array below the headers.
 faq:
-  - q: Why does the demo use MAX rather than SORT?
-    a: The interactive grid evaluates one formula into one cell, and SORT spills a whole table. The presets show the related single-value answers. SORT itself is best tried in Excel where the spill is visible.
+  - q: Can I sort a filtered list?
+    a: Yes, and it is one of the most useful pairings. =SORT(FILTER(D2:D7, C2:C7="Closed"), 1, -1) filters to the closed orders and then ranks them largest first. Dynamic array functions nest freely, and the inner one runs first.
   - q: How do I sort by more than one column?
     a: Pass arrays for sort_index and sort_order — =SORT(A2:D7,{2,4},{1,-1}) sorts by column 2 ascending then column 4 descending. The braces make an array constant.
   - q: What is SORTBY?
@@ -74,23 +73,25 @@ faq:
 
 ## Examples
 
-### 1. The largest value
+### 1. Ranking a column
 
-<Formula>=MAX(D2:D7)</Formula>
+<Formula>=SORT(D2:D7, 1, -1)</Formula>
 
-In Excel, `=SORT(A2:D7, 4, -1)` would return the whole table ordered by amount, largest first. The grid above shows single values instead, because it evaluates one formula into one cell.
+Largest first. Drop the `-1` and you get smallest first, since ascending is the default. Try both in the grid above.
 
-### 2. Conditional maximum
+In a real sheet you would usually sort the whole table rather than one column — `=SORT(A2:D7, 4, -1)` orders every row by the fourth column, keeping each order number attached to its own amount.
 
-<Formula>=MAXIFS(D2:D7, B2:B7, "North")</Formula>
+### 2. Sorting a filtered list
 
-The largest order within one region. MAXIFS answers a narrower question than SORT but works in Excel 2019 and needs no spill space.
+<Formula>=SORT(FILTER(D2:D7, C2:C7="Closed"), 1, -1)</Formula>
 
-### 3. Finding which row holds the maximum
+The inner FILTER runs first and hands its results to SORT. This pairing — narrow it down, then rank it — covers a large share of what people build PivotTables for.
+
+### 3. When you only want the single biggest
 
 <Formula>=INDEX(A2:A7, MATCH(MAX(D2:D7), D2:D7, 0))</Formula>
 
-This is the pattern for "which one is biggest" rather than "how big is the biggest". MAX finds the value, MATCH finds its position, INDEX returns the label. It works in every version of Excel.
+This answers "which one is biggest" rather than "how big is the biggest", and it works in every version of Excel. Reach for it when you need one answer in one cell and a spilled list would be in the way.
 
 <Callout type="tip" title="Sorting without touching the data">
 The real advantage of SORT is that it leaves the source alone. On a shared workbook, using the Sort button rearranges rows for everyone, permanently, and there is no record of what the order used to be. A SORT formula in a separate area gives you the view you need without that risk.

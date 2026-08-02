@@ -17,6 +17,54 @@ export interface Template {
  */
 export const TEMPLATES: Template[] = [
   {
+    slug: 'monthly-budget-planner',
+    title: 'Monthly budget planner',
+    summary: 'Budget against actual, by category, from a transaction log',
+    description:
+      'Enter what you plan to spend by category, then log transactions as they happen. Budgeted, actual, variance and percentage used fill in on their own, and a category turns amber at ninety per cent and red once you pass it. Category names come from a dropdown, so a typo cannot quietly split one category into two.',
+    category: 'Personal finance',
+    difficulty: 'Beginner',
+    sheets: 4,
+    formulas: ['SUMIFS', 'IFERROR', 'COUNTIF'],
+    file: '/downloads/monthly-budget-planner.xlsx',
+  },
+  {
+    slug: 'invoice-template',
+    title: 'Invoice template',
+    summary: 'Printable invoice with VAT and an outstanding-balance log',
+    description:
+      'Your business details go in once on the Settings sheet and flow onto every invoice. Line items total themselves, VAT calculates from a rate you control, and the due date follows your payment terms. A separate log tracks what has been sent and shows what you are still owed.',
+    category: 'Accounting',
+    difficulty: 'Beginner',
+    sheets: 4,
+    formulas: ['SUMIFS', 'ROUND', 'IF'],
+    file: '/downloads/invoice-template.xlsx',
+  },
+  {
+    slug: 'project-tracker-gantt',
+    title: 'Project tracker with Gantt',
+    summary: 'A Gantt chart drawn entirely by conditional formatting',
+    description:
+      'Tasks, owners, dates and progress on the left; a twenty-eight day timeline on the right. There are no shapes and nothing is drawn by hand — each timeline cell fills itself when its date falls inside a task, so changing a date redraws the chart instantly. Weekends shade automatically and completed tasks turn green.',
+    category: 'Operations',
+    difficulty: 'Intermediate',
+    sheets: 3,
+    formulas: ['NETWORKDAYS', 'COUNTIF', 'WEEKDAY'],
+    file: '/downloads/project-tracker-gantt.xlsx',
+  },
+  {
+    slug: 'attendance-tracker',
+    title: 'Attendance and leave tracker',
+    summary: 'A month of attendance codes that count themselves',
+    description:
+      'One row per person, one column per day, and seven attendance codes entered from a dropdown so nothing is ever mistyped. Each code totals per person on the right and across the team on the summary sheet. Change the month in one cell and every column heading follows.',
+    category: 'HR',
+    difficulty: 'Beginner',
+    sheets: 4,
+    formulas: ['COUNTIF', 'WEEKDAY', 'SUM'],
+    file: '/downloads/attendance-tracker.xlsx',
+  },
+  {
     slug: 'cash-flow-forecast',
     title: 'Cash flow forecast',
     summary: '13-week rolling forecast with variance',

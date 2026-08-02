@@ -7,7 +7,6 @@ description: UNIQUE strips duplicates from a range and returns what is left, spi
 versions: [Excel 365, Excel 2021]
 updated: 2026-07-23
 readingTime: 5
-video: https://www.youtube.com/watch?v=PLACEHOLDER
 practiceFile: /downloads/kpi-dashboard.xlsx
 related: [FILTER, SORT, COUNTIFS, SUMIFS]
 syntax: '=UNIQUE(array, [by_col], [exactly_once])'
@@ -35,14 +34,16 @@ demo:
     - ['#1045', 'East', 'Closed', 7300]
     - ['#1046', 'North', 'Closed', 4880]
   presets:
-    - label: How many are North
-      formula: '=COUNTIFS(B2:B7, "North")'
-    - label: How many are South
-      formula: '=COUNTIFS(B2:B7, "South")'
-    - label: Distinct count
-      formula: '=SUMPRODUCT(1/COUNTIFS(B2:B7, B2:B7))'
-    - label: Appears exactly once
-      formula: '=COUNTIFS(B2:B7, "East")'
+    - label: The distinct regions
+      formula: '=UNIQUE(B2:B7)'
+    - label: How many distinct regions
+      formula: '=COUNTA(UNIQUE(B2:B7))'
+    - label: Regions appearing exactly once
+      formula: '=UNIQUE(B2:B7, FALSE, TRUE)'
+    - label: Distinct, then sorted
+      formula: '=SORT(UNIQUE(B2:B7))'
+    - label: Distinct statuses
+      formula: '=UNIQUE(C2:C7)'
 mistakes:
   - level: error
     title: Not available before Excel 2021
@@ -57,8 +58,8 @@ mistakes:
     title: exactly_once means something different from unique
     body: With the third argument TRUE, values that appear more than once are excluded entirely rather than reduced to one. That is a different question — which values are singletons — and mixing the two up silently drops data.
 faq:
-  - q: Why does the demo use COUNTIFS rather than UNIQUE?
-    a: The interactive grid evaluates one formula into one cell, and UNIQUE spills a list across many. The presets show the related counts. The distinct-count preset uses the SUMPRODUCT idiom that works in every version.
+  - q: How do I count the distinct values rather than list them?
+    a: Wrap it in COUNTA — =COUNTA(UNIQUE(B2:B7)). Before Excel 2021 the equivalent is =SUMPRODUCT(1/COUNTIFS(range,range)), which works everywhere but breaks if the range contains blanks.
   - q: How do I count distinct values without UNIQUE?
     a: Use =SUMPRODUCT(1/COUNTIFS(range,range)). Each value contributes one divided by how many times it appears, so a value appearing three times contributes a third, three times over. It fails if the range contains blanks.
   - q: Can UNIQUE work across several columns?
@@ -73,9 +74,9 @@ faq:
 
 ### 1. The distinct list
 
-In Excel, `=UNIQUE(B2:B7)` returns North, South and East — one of each, in the order they first appear. The interactive grid above cannot show a spilled list, so the presets demonstrate the counts behind it.
+<Formula>=UNIQUE(B2:B7)</Formula>
 
-<Formula>=COUNTIFS(B2:B7, "North")</Formula>
+North, South and East — one of each, in the order they first appear, not alphabetical. Try it in the grid above. Sorting is a separate job, which is why `=SORT(UNIQUE(B2:B7))` is such a common pairing.
 
 ### 2. Counting distinct values without UNIQUE
 

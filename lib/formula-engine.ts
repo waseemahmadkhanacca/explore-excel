@@ -17,6 +17,8 @@ export interface CellRef {
 
 export interface EvalResult {
   value?: CellValue;
+  /** Set instead of `value` when the formula spills — FILTER, SORT and UNIQUE. */
+  spill?: CellValue[];
   error?: string;
   note?: string;
   cells: CellRef[];
@@ -371,6 +373,12 @@ function conditional(fn: string, rawArgs: string[], ctx: Ctx): CellValue {
 function collectValues(args: string[], ctx: Ctx): CellValue[] {
   const out: CellValue[] = [];
   for (const a of args) {
+    const spill = asSpillCall(a);
+    if (spill) {
+      const vs = spillValues(spill.fn, spill.args, ctx);
+      if (vs) out.push(...vs);
+      continue;
+    }
     const rg = parseRange(a);
     if (rg) {
       const vs = rangeValues(ctx.sheet, rg);
@@ -537,9 +545,108 @@ function evaluateArray(expr: string, ctx: Ctx): CellValue[] {
   return out;
 }
 
+/**
+ * The dynamic-array functions. These return a column of results rather than a
+ * single value — Excel calls it spilling — so they cannot go through
+ * callFunction, whose contract is one CellValue out.
+ *
+ * Returns null when `fn` is not one of them, which is how the two callers below
+ * test whether an argument is a spill call:
+ *
+ *   evaluate()      — a formula that IS one of these reports every result
+ *   collectValues() — lets COUNTA(UNIQUE(...)) and SUM(FILTER(...)) work
+ *
+ * Anywhere else a spill call is a scalar-position error, which is what Excel
+ * would show too once the spill had nowhere to go.
+ */
+const SPILL_FNS = new Set(['FILTER', 'SORT', 'UNIQUE']);
+
+function spillValues(fn: string, args: string[], ctx: Ctx): CellValue[] | null {
+  if (!SPILL_FNS.has(fn)) return null;
+
+  // The source is normally a range, but may itself be a spill call so that
+  // SORT(FILTER(...)) and UNIQUE(FILTER(...)) compose the way they do in Excel.
+  let values: CellValue[];
+  const nested = asSpillCall(args[0] ?? '');
+  if (nested) {
+    const inner = spillValues(nested.fn, nested.args, ctx);
+    if (!inner) throw new FormulaError('#REF!');
+    values = inner;
+  } else {
+    const source = parseRange(args[0] ?? '');
+    const vs = rangeValues(ctx.sheet, source);
+    if (!vs || !source) throw new FormulaError('#REF!');
+    for (let i = 0; i < vs.length; i++) ctx.cells.push({ c: source.c, r: i });
+    values = vs;
+  }
+
+  switch (fn) {
+    case 'FILTER': {
+      if (args.length < 2) throw new FormulaError('#VALUE!');
+      const include = evaluateArray(args[1], ctx);
+      if (include.length !== values.length) {
+        throw new FormulaError('#VALUE!', 'the range and the condition cover different numbers of rows');
+      }
+      const kept = values.filter((_, i) => truthy(include[i]));
+      if (kept.length) return kept;
+      // Excel returns #CALC! for an empty filter unless if_empty is supplied.
+      if (args.length > 2) return [evaluateExpr(args[2], ctx)];
+      throw new FormulaError('#CALC!', 'nothing matched, and no if_empty value was given');
+    }
+
+    case 'SORT': {
+      const order = args.length > 2 ? num(evaluateExpr(args[2], ctx)) : 1;
+      const dir = order === -1 ? -1 : 1;
+      return [...values].sort((a, b) => {
+        const x = normalise(a);
+        const y = normalise(b);
+        if (typeof x === 'number' && typeof y === 'number') return (x - y) * dir;
+        return String(x).localeCompare(String(y)) * dir;
+      });
+    }
+
+    default: {
+      // UNIQUE. Third argument TRUE keeps only values appearing exactly once.
+      const exactlyOnce = args.length > 2 && truthy(evaluateExpr(args[2], ctx));
+      const counts = new Map<string, number>();
+      for (const v of values) {
+        const k = String(normalise(v));
+        counts.set(k, (counts.get(k) ?? 0) + 1);
+      }
+      const seen = new Set<string>();
+      const out: CellValue[] = [];
+      for (const v of values) {
+        const k = String(normalise(v));
+        if (seen.has(k)) continue;
+        seen.add(k);
+        if (exactlyOnce && counts.get(k) !== 1) continue;
+        out.push(v);
+      }
+      if (!out.length) throw new FormulaError('#CALC!', 'no values met the condition');
+      return out;
+    }
+  }
+}
+
+/** Splits `=FILTER(...)` into its name and arguments, or null if it is not a lone call. */
+function asSpillCall(expr: string): { fn: string; args: string[] } | null {
+  const m = expr.trim().match(/^([A-Za-z][A-Za-z0-9_.]*)\s*\((.*)\)$/s);
+  if (!m) return null;
+  const fn = m[1].toUpperCase();
+  if (!SPILL_FNS.has(fn)) return null;
+  return { fn, args: splitArgs(m[2]) };
+}
+
 function callFunction(fn: string, args: string[], ctx: Ctx): CellValue {
   const val = (i: number) => evaluateExpr(args[i] ?? '', ctx);
   const sheet = ctx.sheet;
+
+  if (SPILL_FNS.has(fn)) {
+    throw new FormulaError(
+      '#SPILL!',
+      `${fn} returns a whole column of results. Use it on its own, or wrap it in something that reduces it such as COUNTA or SUM.`
+    );
+  }
 
   switch (fn) {
     // ---------- lookup ----------
@@ -892,7 +999,17 @@ function callFunction(fn: string, args: string[], ctx: Ctx): CellValue {
     }
     case 'WEEKDAY': {
       const d = fromSerial(num(val(0)));
-      return d.getUTCDay() + 1;
+      const day = d.getUTCDay(); // 0 = Sunday
+      const type = args.length > 1 ? num(val(1)) : 1;
+
+      // return_type chooses which day is numbered 1. Types 11-17 set the first
+      // day to Monday through Sunday; 1 and 17 are Sunday-first, 2 and 11 are
+      // Monday-first, and 3 is Monday-first but counting from zero.
+      if (type === 3) return (day + 6) % 7;
+      const first =
+        type === 1 ? 0 : type === 2 ? 1 : type >= 11 && type <= 17 ? (type - 10) % 7 : -1;
+      if (first < 0) throw new FormulaError('#NUM!', `${type} is not a valid return_type`);
+      return ((day - first + 7) % 7) + 1;
     }
 
     // ---------- information ----------
@@ -920,7 +1037,23 @@ export function evaluate(sheet: Sheet, input: string): EvalResult {
 
   const ctx: Ctx = { sheet, cells: [] };
   try {
-    const value = evaluateExpr(f.slice(1), ctx);
+    const body = f.slice(1);
+
+    // A lone dynamic-array call spills, so it reports every result rather than
+    // one value. Nested uses go through collectValues instead.
+    const spill = asSpillCall(body);
+    if (spill) {
+      const values = spillValues(spill.fn, spill.args, ctx);
+      if (values) {
+        return {
+          spill: values,
+          note: `Spills ${values.length} result${values.length === 1 ? '' : 's'} down the column.`,
+          cells: ctx.cells,
+        };
+      }
+    }
+
+    const value = evaluateExpr(body, ctx);
     return { value, cells: ctx.cells };
   } catch (e) {
     if (e instanceof FormulaError) {

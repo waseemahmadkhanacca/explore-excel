@@ -1,0 +1,92 @@
+---
+slug: vlookup-not-working
+title: 'Why your VLOOKUP returns #N/A'
+category: Troubleshooting
+summary: The seven causes of a failed lookup, in the order worth checking, with the one-line test that identifies each.
+description: 'A VLOOKUP returning #N/A on values that look identical is almost always whitespace, a number stored as text, or a column index counted from the wrong place. Here is how to tell which, in under a minute.'
+updated: 2026-08-01
+readingTime: 8
+related: [VLOOKUP, XLOOKUP, LEN, TRIM]
+---
+
+A lookup that fails on data you can see with your own eyes is one of the most frustrating things Excel does. The value is right there. You can read it in both columns. Excel says `#N/A`.
+
+The reason is nearly always that the two values are not what they appear to be. Here are the causes in the order worth checking, because the first two account for most of them.
+
+## 1. Trailing spaces
+
+By a wide margin the most common cause. `"Northaero"` and `"Northaero "` look identical in a cell and are different values to every lookup function in Excel.
+
+The test takes ten seconds:
+
+<Formula>=LEN(A2)</Formula>
+
+Run it on both the value you are looking up and the value in the table. Different numbers mean different text, however identical they look on screen.
+
+To confirm it is whitespace specifically:
+
+<Formula>=LEN(A2)-LEN(TRIM(A2))</Formula>
+
+Anything above zero is padding that TRIM would remove.
+
+<Callout type="tip" title="Fix the data, not the formula">
+It is tempting to write `=VLOOKUP(TRIM(A2), ...)` and move on. That fixes one formula and leaves the problem in the data for the next person. Clean the column once — TRIM into a helper column, paste back as values — and every formula that touches it works from then on.
+</Callout>
+
+## 2. Numbers stored as text
+
+The second big one. A cell containing `1042` and a cell containing `"1042"` display identically and never match.
+
+<Formula>=ISNUMBER(A2)</Formula>
+
+`TRUE` on one side and `FALSE` on the other is your answer. The visual clue is alignment: Excel right-aligns numbers and left-aligns text by default, so a column of numbers with some entries hugging the left edge is telling you something.
+
+This happens constantly with data exported from accounting systems, and with anything that has been through a CSV.
+
+To convert, multiply by one, or use `VALUE()`, or select the column and use Text to Columns with no options set — that last one forces Excel to re-evaluate every cell and is the fastest fix for a whole column.
+
+## 3. The column index counts from the table, not the sheet
+
+`=VLOOKUP(A2, C:F, 2, FALSE)` returns column D, not column B. The third argument counts from the first column of the range you gave it.
+
+This produces a wrong answer rather than an error, which makes it worse than `#N/A`. If your lookup returns something plausible but incorrect, this is the first thing to check.
+
+## 4. The lookup value is not in the first column
+
+VLOOKUP only searches the leftmost column of its table. If the value you are matching sits in column D and the thing you want is in column B, VLOOKUP cannot do it at all.
+
+The old workaround was INDEX and MATCH. The modern answer is XLOOKUP, which takes the search column and the return column as separate arguments and does not care which order they sit in.
+
+## 5. Approximate match left switched on
+
+Leaving off the fourth argument means approximate match, which requires the data to be sorted and returns the closest value below your target when it cannot find an exact one.
+
+<Formula>=VLOOKUP("SKU-114", A2:D7, 3, FALSE)</Formula>
+
+The `FALSE` is not optional in practice. Without it, unsorted data returns confident nonsense. This is the single worst default in Excel, and it is why XLOOKUP made exact match the default instead.
+
+## 6. Case is not the problem
+
+Worth stating because people chase it: VLOOKUP is not case sensitive. `"north"` matches `"North"`. If your values differ only in capitalisation, that is not why the lookup failed.
+
+## 7. The ranges moved
+
+A VLOOKUP written as `A2:D7` and then filled down becomes `A3:D8`, `A4:D9` and so on. The bottom of your table falls out of range and the last few rows return `#N/A` while everything above works.
+
+Lock it with dollar signs — `$A$2:$D$7` — or better, convert the table to a real Excel Table and reference it by name, which cannot drift.
+
+## The order to check in
+
+1. `LEN` on both values — catches whitespace
+2. `ISNUMBER` on both values — catches text numbers
+3. Check the column index counts from the table
+4. Check the fourth argument is `FALSE`
+5. Check the range is locked
+
+Four out of five failures are resolved by step two.
+
+## The longer-term fix
+
+If you are on Excel 365 or 2021, most of this disappears with XLOOKUP. Exact match is the default, there is no column index to miscount, it looks in both directions, and the fourth argument gives you a readable message instead of `#N/A`.
+
+The whitespace and text-number problems remain, because those are data problems rather than formula problems. No lookup function will ever fix them for you.

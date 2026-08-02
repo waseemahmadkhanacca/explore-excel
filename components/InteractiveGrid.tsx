@@ -82,6 +82,12 @@ export default function InteractiveGrid({
   // should read "4", a currency total "42,130.00", and a date function a date.
   const display = (() => {
     if (result.error) return result.error;
+    // FILTER, SORT and UNIQUE spill a column. Show every result, the way the
+    // sheet would, rather than collapsing to the first one.
+    if (result.spill) {
+      const spillsMoney = money.size > 0 && result.spill.every((x) => typeof x === 'number');
+      return result.spill.map((x) => formatValue(x, spillsMoney)).join('  ·  ');
+    }
     const v = result.value ?? '';
     if (typeof v !== 'number') return formatValue(v);
     const fname = formula.replace(/^=\s*/, '').match(/^([A-Za-z]+)/)?.[1]?.toUpperCase() ?? '';

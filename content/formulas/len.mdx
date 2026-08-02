@@ -1,0 +1,95 @@
+---
+slug: len
+name: LEN
+category: Text
+summary: Count the characters in a cell
+description: LEN returns how many characters a cell contains, including spaces. On its own it is unremarkable. As a diagnostic for the invisible whitespace that breaks lookups, it is the most useful function in Excel.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 5
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [TRIM, MID, LEFT, SUBSTITUTE]
+syntax: '=LEN(text)'
+arguments:
+  - name: text
+    required: true
+    description: The cell or text to measure. Spaces count. Numbers are measured as the digits of their stored value, not as displayed.
+demo:
+  file: Product codes.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, Description, Supplier, Price]
+  editable: [1, 2]
+  money: [3]
+  rows:
+    - ['NA-1042-X', 'Widget, small', 'Northaero', 24.5]
+    - ['NA-1043-X', 'Widget, large ', 'Northaero', 31.75]
+    - ['SE-2210-B', 'Bracket', 'Southend ', 8.2]
+    - ['SE-2211-B', 'Cable, 2m', 'Southend', 15.4]
+    - ['WM-3355-C', 'Sensor', 'Westmoor', 112.0]
+    - ['WM-3356-C', 'Adapter', 'Westmoor', 19.9]
+  presets:
+    - label: Length of a code
+      formula: '=LEN(A2)'
+    - label: A description with a hidden space
+      formula: '=LEN(B3)'
+    - label: The same, trimmed
+      formula: '=LEN(TRIM(B3))'
+    - label: How many spaces were removed
+      formula: '=LEN(C4)-LEN(TRIM(C4))'
+    - label: Check every code is the same length
+      formula: '=LEN(A2)-LEN(A5)'
+mistakes:
+  - level: warning
+    title: Trailing spaces are invisible on screen
+    body: This is the whole reason LEN matters. "Southend " and "Southend" look identical in a cell and will never match each other in a lookup. LEN is how you prove which one you have.
+  - level: warning
+    title: LEN measures the stored value, not the display
+    body: A cell showing £1,200.00 has a stored value of 1200, so LEN returns 4. Number formatting is a mask over the value and LEN sees straight through it.
+  - level: warning
+    title: A date returns five, not ten
+    body: Dates are stored as serial numbers, so LEN of a cell showing 15/01/2026 returns the digits of 46037. To measure the text you can see, wrap it in TEXT first.
+  - level: warning
+    title: LEN of an empty cell is zero, but so is LEN of a formula returning ""
+    body: The two are indistinguishable to LEN even though ISBLANK tells them apart. If the difference matters, test with ISBLANK rather than comparing LEN to zero.
+faq:
+  - q: How do I find trailing spaces in my data?
+    a: Compare LEN against LEN of TRIM — =LEN(A2)-LEN(TRIM(A2)). Anything above zero has whitespace that TRIM would remove. Filter on that column to find every offending row at once.
+  - q: Why do my VLOOKUPs fail when the values look identical?
+    a: Almost always whitespace, and LEN is how you confirm it in seconds. Run LEN on both the lookup value and the value in the table. Different numbers mean different text, however identical they appear.
+  - q: Does LEN count spaces?
+    a: Yes, every one of them, including leading and trailing. That is precisely what makes it useful as a diagnostic.
+  - q: How do I count characters across a whole column?
+    a: Wrap it in SUMPRODUCT — =SUMPRODUCT(LEN(A2:A7)). LEN on its own handles one cell at a time.
+  - q: What is the difference between LEN and LENB?
+    a: LENB counts bytes rather than characters, which differs only for double-byte character sets such as Japanese or Chinese. For Latin text they return the same number.
+---
+
+## Examples
+
+### 1. Measuring a value
+
+<Formula>=LEN(A2)</Formula>
+
+Nine characters, counting both hyphens. Useful on its own for validating that every code follows the same pattern.
+
+### 2. Finding the whitespace that breaks lookups
+
+Look at the description on row 3 and the supplier on row 4 in the grid. They appear normal.
+
+<Formula>=LEN(B3)</Formula>
+
+Now compare against the trimmed version:
+
+<Formula>=LEN(TRIM(B3))</Formula>
+
+One character shorter. There is a trailing space that nothing on screen reveals.
+
+<Callout type="tip" title="The first thing to try when a lookup fails">
+When XLOOKUP or VLOOKUP returns `#N/A` on values that look identical, run `=LEN()` on both sides before doing anything else. Different lengths mean different text. This one check resolves more lookup failures than every other diagnostic combined, and it takes ten seconds.
+</Callout>
+
+### 3. Counting the damage
+
+<Formula>=LEN(C4)-LEN(TRIM(C4))</Formula>
+
+How many characters TRIM would strip. Put this beside a column of imported data and sort descending to find every row with a whitespace problem, ordered by how bad it is.

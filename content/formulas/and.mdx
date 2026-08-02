@@ -1,0 +1,94 @@
+---
+slug: and
+name: AND
+category: Logical
+summary: Test whether every condition is true
+description: AND returns TRUE only when all of its conditions are true. On its own it is rarely useful — its job is to sit inside IF, or behind a conditional formatting rule, and combine several tests into one decision.
+versions: [All versions]
+updated: 2026-08-01
+readingTime: 5
+practiceFile: /downloads/inventory-tracker.xlsx
+related: [IF, IFS, COUNTIFS, IFERROR]
+syntax: '=AND(logical1, [logical2], ...)'
+arguments:
+  - name: logical1
+    required: true
+    description: The first condition to test. Anything producing TRUE or FALSE.
+  - name: logical2
+    required: false
+    description: Further conditions, up to 255. Every one must be true for the result to be TRUE.
+demo:
+  file: Stock review.xlsx
+  columns: [A, B, C, D]
+  headers: [SKU, On hand, Reorder point, Unit cost]
+  editable: [1, 2]
+  money: [3]
+  rows:
+    - ['NA-1042-X', 140, 50, 24.5]
+    - ['NA-1043-X', 18, 40, 31.75]
+    - ['SE-2210-B', 62, 25, 8.2]
+    - ['SE-2211-B', 9, 30, 15.4]
+    - ['WM-3355-C', 210, 80, 112.0]
+    - ['WM-3356-C', 54, 60, 19.9]
+  presets:
+    - label: Two conditions, both true
+      formula: '=AND(B2>100, C2<60)'
+    - label: One condition false
+      formula: '=AND(B3>100, C3<60)'
+    - label: Below reorder and expensive
+      formula: '=AND(B4<C4, D4>10)'
+    - label: Inside IF
+      formula: '=IF(AND(B5<C5, D5>10), "Order now", "Hold")'
+    - label: Three conditions
+      formula: '=AND(B2>0, B2>C2, D2<100)'
+mistakes:
+  - level: error
+    title: Writing a range instead of conditions
+    body: '=AND(B2:B7>100) does not test each row separately in older Excel. AND collapses everything to one answer. To test row by row, put a separate AND in each row, or use COUNTIFS to count how many rows satisfy all the conditions.'
+  - level: warning
+    title: Chaining comparisons the way you would speak
+    body: '=AND(1 < B2 < 100) does not mean what it looks like. Excel evaluates it left to right and the result is nonsense. Write two conditions — AND(B2>1, B2<100).'
+  - level: warning
+    title: Using AND when you mean OR
+    body: Every extra condition in an AND makes the result harder to satisfy, never easier. If adding a condition should widen the net rather than narrow it, OR is the function you want.
+  - level: warning
+    title: Text and blanks are ignored rather than treated as false
+    body: A condition that evaluates to text is skipped entirely. If every argument is skipped, AND returns #VALUE!. This matters when conditions reference cells that might be empty.
+faq:
+  - q: What is the difference between AND and OR?
+    a: AND needs every condition to be true. OR needs at least one. They can be nested inside each other — AND(A, OR(B, C)) — to build any rule you need, though beyond two levels it is usually clearer to add a helper column.
+  - q: Why does AND return TRUE or FALSE instead of a useful answer?
+    a: Because that is its job. AND is a test, not an output. Put it inside IF — =IF(AND(...), "Yes", "No") — to turn the test into something a reader can act on.
+  - q: Can I use AND in conditional formatting?
+    a: Yes, and it is one of the best uses. Create a rule using a formula, enter =AND($B2<$C2, $D2>10), and only rows meeting every condition are highlighted. Note the dollar signs on the column letters.
+  - q: How do I do AND across a whole column at once?
+    a: Multiply the conditions rather than using AND — (B2:B7>100)*(C2:C7<60) gives one result per row, which is what FILTER and SUMPRODUCT expect. Multiplication is AND because anything times zero is zero.
+  - q: Is there a limit to how many conditions AND takes?
+    a: 255. Long before that it becomes unreadable. Past about four conditions, a helper column holding an intermediate test is easier to check and much easier for someone else to follow.
+---
+
+## Examples
+
+### 1. Two tests, one answer
+
+<Formula>=AND(B2>100, C2<60)</Formula>
+
+TRUE, because both are true. Change either condition, or edit the numbers in the grid, and it flips to FALSE the moment one fails.
+
+### 2. Turning the test into a decision
+
+AND on its own tells a reader very little. Wrapped in IF, it does something.
+
+<Formula>=IF(AND(B5<C5, D5>10), "Order now", "Hold")</Formula>
+
+Stock below the reorder point *and* the item costs enough to be worth a purchase order. Either condition alone would be the wrong rule.
+
+<Callout type="tip" title="Where AND really earns its place">
+Conditional formatting. Create a new rule, choose "Use a formula", and enter `=AND($B2<$C2, $D2>10)`. Every row meeting both conditions highlights, and it keeps working as the data changes. The dollar signs lock the columns while leaving the row free to move — get those wrong and the highlighting drifts diagonally across the sheet.
+</Callout>
+
+### 3. Three conditions
+
+<Formula>=AND(B2>0, B2>C2, D2<100)</Formula>
+
+In stock, above the reorder point, and not an expensive item. Each extra condition narrows the result further — an AND can only ever get harder to satisfy.

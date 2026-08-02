@@ -1,0 +1,97 @@
+---
+slug: averageif
+name: AVERAGEIF
+category: Math
+summary: Average only the values that meet a condition
+description: AVERAGEIF averages the cells in a range that meet a single condition. It differs from SUMIF and COUNTIF in one important way — it ignores empty cells rather than treating them as zero, which changes the answer.
+versions: [Excel 2007 and later]
+updated: 2026-08-01
+readingTime: 5
+practiceFile: /downloads/budget-vs-actual.xlsx
+related: [SUMIF, COUNTIF, SUMIFS, ROUND]
+syntax: '=AVERAGEIF(range, criteria, [average_range])'
+arguments:
+  - name: range
+    required: true
+    description: The cells to test against the condition.
+  - name: criteria
+    required: true
+    description: What to look for. A number, text in quotes, or a comparison such as ">500".
+  - name: average_range
+    required: false
+    description: The cells to actually average. Leave it out and Excel averages the range itself.
+demo:
+  file: Regional sales.xlsx
+  columns: [A, B, C, D]
+  headers: [Rep, Region, Product, Amount]
+  editable: [3]
+  money: [3]
+  rows:
+    - ['Adams', 'North', 'Widget', 1200]
+    - ['Brown', 'South', 'Bracket', 450]
+    - ['Adams', 'North', 'Cable', 780]
+    - ['Clark', 'East', 'Widget', 1650]
+    - ['Brown', 'South', 'Sensor', 320]
+    - ['Davis', 'North', 'Widget', 990]
+  presets:
+    - label: Average for one region
+      formula: '=AVERAGEIF(B2:B7, "North", D2:D7)'
+    - label: Average for one product
+      formula: '=AVERAGEIF(C2:C7, "Widget", D2:D7)'
+    - label: Average of the large orders
+      formula: '=AVERAGEIF(D2:D7, ">1000")'
+    - label: Average excluding one region
+      formula: '=AVERAGEIF(B2:B7, "<>North", D2:D7)'
+    - label: Rounded to whole currency
+      formula: '=ROUND(AVERAGEIF(B2:B7, "North", D2:D7), 0)'
+mistakes:
+  - level: error
+    title: No matches gives #DIV/0!
+    body: When nothing meets the condition there is nothing to divide by, so AVERAGEIF returns #DIV/0! rather than zero. This is correct — the average of no values does not exist — but it needs handling. Wrap it in IFERROR for anything a reader will see.
+  - level: warning
+    title: Empty cells are skipped, not counted as zero
+    body: This is the important difference from SUMIF. A blank in average_range is left out of both the total and the count, so the average is of the cells that have values. If blanks genuinely mean zero, the answer will be too high.
+  - level: warning
+    title: Zeros are counted, blanks are not
+    body: A cell containing 0 is a value and pulls the average down. A cell containing nothing is ignored entirely. The two look almost the same in a report and produce very different numbers.
+  - level: warning
+    title: The argument order matches SUMIF, not SUMIFS
+    body: AVERAGEIF puts the tested range first, like SUMIF. AVERAGEIFS puts the averaged range first, like SUMIFS. The same trap, in the same place.
+faq:
+  - q: What is the difference between AVERAGEIF and AVERAGEIFS?
+    a: AVERAGEIF takes one condition, AVERAGEIFS takes many, and the argument order differs — AVERAGEIFS puts the range being averaged first. Using AVERAGEIFS everywhere avoids having to remember which is which.
+  - q: How do I stop AVERAGEIF returning #DIV/0!?
+    a: Wrap it — =IFERROR(AVERAGEIF(...), "No data"). Do not replace it with zero, because zero is a real average and "nothing matched" is not the same thing.
+  - q: Does AVERAGEIF ignore blank cells?
+    a: Yes, and this is its most important behaviour. Blanks are excluded from the calculation entirely. If a blank should count as zero, replace the blanks in the data rather than working around it in the formula.
+  - q: Can AVERAGEIF use a comparison against another cell?
+    a: Yes, but the operator must be joined on with an ampersand — ">"&F1. Writing ">F1" searches for that literal text.
+  - q: Why is my average different from summing and dividing?
+    a: Almost always blanks. SUMIF divided by COUNTIF counts every matching row, while AVERAGEIF counts only the rows that actually hold a number.
+---
+
+## Examples
+
+### 1. Average within a category
+
+<Formula>=AVERAGEIF(B2:B7, "North", D2:D7)</Formula>
+
+Three northern orders, averaged. The argument order is the same as SUMIF: the column being tested first, the column being measured last.
+
+### 2. Average by comparison
+
+<Formula>=AVERAGEIF(D2:D7, ">1000")</Formula>
+
+Testing the same column you are averaging, so the third argument is not needed.
+
+<Callout type="warning" title="Blanks change the answer">
+AVERAGEIF skips empty cells. If half your amount column is blank because the orders have not been invoiced yet, the average is of the invoiced ones only — which may be exactly right, or may be badly misleading, depending on what you meant. Decide which before you publish the number.
+</Callout>
+
+### 3. Handling no matches
+
+An average of nothing is `#DIV/0!`, not zero:
+
+<Formula>=ROUND(AVERAGEIF(B2:B7, "North", D2:D7), 0)</Formula>
+
+Change "North" to a region that does not exist and you will see the error. In a report, wrap it in `IFERROR` and return a dash rather than zero — a dash reads as "none", and zero reads as a real average of zero.
