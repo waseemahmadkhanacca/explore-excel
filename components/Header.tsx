@@ -66,21 +66,43 @@ export function BrandMark() {
   );
 }
 
-const FORMULA_GROUPS = [
-  { fns: 'XLOOKUP · VLOOKUP · INDEX', label: 'Lookup and reference' },
-  { fns: 'SUMIFS · COUNTIFS · ROUND', label: 'Maths and statistics' },
-  { fns: 'IF · IFS · IFERROR', label: 'Logical tests' },
-  { fns: 'TEXTJOIN · TRIM · LEFT', label: 'Working with text' },
-  { fns: 'EOMONTH · NETWORKDAYS', label: 'Dates and time' },
-  { fns: 'FILTER · UNIQUE · SORT', label: 'Dynamic arrays' },
-];
+/** Plain-English names for the category values used in the MDX frontmatter. */
+const CATEGORY_LABELS: Record<string, string> = {
+  Lookup: 'Lookup and reference',
+  Math: 'Maths and statistics',
+  Logical: 'Logical tests',
+  Text: 'Working with text',
+  Date: 'Dates and time',
+  'Dynamic array': 'Dynamic arrays',
+};
 
+/**
+ * Built from the content rather than hardcoded, so a new formula page appears
+ * in the menu on its own. Each entry links to the library filtered to that
+ * category — previously they all pointed at the unfiltered list, which made
+ * every item in the menu do the same thing.
+ */
+function buildFormulaGroups() {
+  const byCategory = new Map<string, string[]>();
+  for (const f of getAllFormulas()) {
+    const list = byCategory.get(f.category) ?? [];
+    list.push(f.name);
+    byCategory.set(f.category, list);
+  }
 
-
-
+  return [...byCategory.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([category, names]) => ({
+      category,
+      label: CATEGORY_LABELS[category] ?? category,
+      fns: names.slice(0, 3).join(' · '),
+      count: names.length,
+    }));
+}
 
 export default function Header() {
   const searchItems = buildSearchIndex();
+  const formulaGroups = buildFormulaGroups();
 
   return (
     <header className="nav">
@@ -98,10 +120,15 @@ export default function Header() {
               Formulas <Chevron />
             </Link>
             <div className="dd dd-wide">
-              {FORMULA_GROUPS.map((g) => (
-                <Link key={g.fns} href="/formulas/">
+              {formulaGroups.map((g) => (
+                <Link
+                  key={g.category}
+                  href={`/formulas/?category=${encodeURIComponent(g.category)}`}
+                >
                   <div className="dm">{g.fns}</div>
-                  <div className="ds">{g.label}</div>
+                  <div className="ds">
+                    {g.label} · {g.count} formula{g.count === 1 ? '' : 's'}
+                  </div>
                 </Link>
               ))}
               <div className="dd-foot">

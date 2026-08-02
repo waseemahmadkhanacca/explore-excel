@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Formula } from '@/lib/content';
 
@@ -11,6 +11,23 @@ interface Props {
 
 export default function LibraryBrowser({ formulas, categories }: Props) {
   const [active, setActive] = useState('All');
+
+  // The header menu links here with ?category=Lookup and similar. Reading it on
+  // mount rather than with useSearchParams keeps this page statically
+  // prerendered — useSearchParams would force it behind a Suspense boundary.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('category');
+    if (wanted && categories.includes(wanted)) setActive(wanted);
+  }, [categories]);
+
+  /** Keeps the address bar in step so a filtered view can be linked to. */
+  const choose = (category: string) => {
+    setActive(category);
+    const url = new URL(window.location.href);
+    if (category === 'All') url.searchParams.delete('category');
+    else url.searchParams.set('category', category);
+    window.history.replaceState(null, '', url);
+  };
 
   const visible =
     active === 'All' ? formulas : formulas.filter((f) => f.category === active);
@@ -24,7 +41,7 @@ export default function LibraryBrowser({ formulas, categories }: Props) {
             type="button"
             className={c === active ? 'fbtn on' : 'fbtn'}
             aria-pressed={c === active}
-            onClick={() => setActive(c)}
+            onClick={() => choose(c)}
           >
             {c}
           </button>

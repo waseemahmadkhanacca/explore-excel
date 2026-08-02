@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description: p.description,
       type: 'article',
       publishedTime: p.updated,
+      // Replaces layout.tsx's openGraph entirely, so the image must repeat.
+      images: ['/og-image.png'],
+      locale: 'en_GB',
     },
   };
 }

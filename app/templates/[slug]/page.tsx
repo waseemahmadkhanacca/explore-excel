@@ -23,7 +23,13 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: `${t.title} — free Excel template`,
     description: t.description,
     alternates: { canonical: `/templates/${t.slug}/` },
-    openGraph: { title: t.title, description: t.description, type: 'article' },
+    openGraph: {
+      title: t.title,
+      description: t.description,
+      type: 'article',
+      images: ['/og-image.png'],
+      locale: 'en_GB',
+    },
   };
 }
 

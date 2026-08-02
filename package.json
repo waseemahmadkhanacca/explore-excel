@@ -9,6 +9,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "build:templates": "node scripts/build-templates.js",
+    "verify:templates": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/verify-templates.ps1",
+    "fix:gridlines": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/remove-gridlines.ps1",
     "cf:build": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"

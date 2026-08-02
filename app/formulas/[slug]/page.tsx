@@ -34,6 +34,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description: f.description,
       type: 'article',
       modifiedTime: f.updated,
+      // Defining openGraph here replaces the one in layout.tsx wholesale, so
+      // the image has to be repeated. Without it every share is a bare link.
+      images: ['/og-image.png'],
+      locale: 'en_GB',
     },
   };
 }
