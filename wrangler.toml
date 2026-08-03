@@ -20,4 +20,4 @@ NEXT_PUBLIC_SITE_URL = "https://exploreexcel.com"
 # (15 U.S.C. 7704(a)(5)); the subscribe route refuses to send without it.
 # Not a secret — it appears in every message — so it belongs here rather than in
 # wrangler secret.
-MAILING_ADDRESS = "Explore Excel, PO Box Manga Mandi, Lahore, Pakistan"
+MAILING_ADDRESS = "Explore Excel, PO Box 55270, Manga Mandi, Lahore, Pakistan"
