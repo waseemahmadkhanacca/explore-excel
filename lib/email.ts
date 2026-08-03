@@ -17,23 +17,14 @@ const FROM = 'Explore Excel <hello@exploreexcel.com>';
 
 /**
  * CAN-SPAM requires a valid physical postal address in every commercial email.
- * A PO box registered with the postal service counts, and is what most sole
- * operators use rather than publishing a home address.
  *
- * Set MAILING_ADDRESS in the environment. Sending is blocked without it —
- * failing loudly is far better than quietly shipping non-compliant mail.
+ * It arrives as an argument rather than being read here from process.env,
+ * because on Cloudflare Workers process.env carries none of the configured
+ * values — they exist only on the runtime env object. Reading it at module
+ * scope would silently produce an empty address in production, which is the
+ * exact failure the requirement exists to prevent. The caller reads it from
+ * the runtime env and refuses to send without it.
  */
-export const MAILING_ADDRESS = process.env.MAILING_ADDRESS ?? '';
-
-export function assertMailingAddress(): string {
-  if (!MAILING_ADDRESS.trim()) {
-    throw new Error(
-      'MAILING_ADDRESS is not set. CAN-SPAM requires a physical postal address in every ' +
-        'commercial email, so sending is blocked until one is configured.'
-    );
-  }
-  return MAILING_ADDRESS;
-}
 
 export interface TemplateEmailInput {
   to: string;
@@ -41,6 +32,8 @@ export interface TemplateEmailInput {
   templateSummary: string;
   downloadUrl: string;
   unsubscribeToken: string;
+  /** Physical postal address printed in the footer. Required by CAN-SPAM. */
+  mailingAddress: string;
 }
 
 function unsubscribeUrl(token: string): string {
@@ -86,7 +79,7 @@ function htmlBody(input: TemplateEmailInput): string {
     </p>
 
     <p style="font-size:12px;line-height:1.5;color:#6b6b6b;margin:10px 0 0;">
-      ${escapeHtml(assertMailingAddress())}
+      ${escapeHtml(input.mailingAddress)}
     </p>
   </div>
 </body></html>`;
@@ -109,7 +102,7 @@ function textBody(input: TemplateEmailInput): string {
     'You are receiving this because you asked for this file at exploreexcel.com.',
     `Unsubscribe: ${unsubscribeUrl(input.unsubscribeToken)}`,
     '',
-    assertMailingAddress(),
+    input.mailingAddress,
   ].join('\n');
 }
 

@@ -36,6 +36,7 @@ function rateLimit(ip: string): boolean {
 interface Env {
   DB?: D1Database;
   RESEND_API_KEY?: string;
+  MAILING_ADDRESS?: string;
 }
 
 export async function POST(request: Request) {
@@ -82,14 +83,17 @@ export async function POST(request: Request) {
   // is why the block below falls back to process.env for local development.
   let apiKey: string | undefined;
   let db: D1Database | undefined;
+  let mailingAddress: string | undefined;
   try {
     const { env } = getCloudflareContext();
     apiKey = (env as unknown as Env).RESEND_API_KEY;
     db = (env as unknown as Env).DB;
+    mailingAddress = (env as unknown as Env).MAILING_ADDRESS;
   } catch {
     const env = (process.env as unknown) as Env;
     apiKey = env.RESEND_API_KEY;
     db = env.DB;
+    mailingAddress = env.MAILING_ADDRESS;
   }
 
   if (!apiKey || !db) {
@@ -97,6 +101,19 @@ export async function POST(request: Request) {
       {
         error:
           'Email delivery is not configured yet. Set RESEND_API_KEY and bind the D1 database.',
+      },
+      { status: 503 }
+    );
+  }
+
+  // CAN-SPAM requires a physical postal address in every commercial email and
+  // assesses penalties per message, so refusing to send is the safe failure.
+  if (!mailingAddress?.trim()) {
+    return NextResponse.json(
+      {
+        error:
+          'Email delivery is not configured yet. Set MAILING_ADDRESS — a physical postal ' +
+          'address is legally required in every marketing email.',
       },
       { status: 503 }
     );
@@ -117,6 +134,7 @@ export async function POST(request: Request) {
       templateSummary: template.summary,
       downloadUrl: `${SITE.url}${template.file}`,
       unsubscribeToken: token,
+      mailingAddress,
     },
     apiKey
   );

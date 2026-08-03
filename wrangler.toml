@@ -15,3 +15,9 @@ database_id = "7818d8a1-99ba-456e-8847-8306c818689d"
 
 [vars]
 NEXT_PUBLIC_SITE_URL = "https://exploreexcel.com"
+
+# Printed at the foot of every marketing email. Required by the US CAN-SPAM Act
+# (15 U.S.C. 7704(a)(5)); the subscribe route refuses to send without it.
+# Not a secret — it appears in every message — so it belongs here rather than in
+# wrangler secret.
+MAILING_ADDRESS = "Explore Excel, PO Box Manga Mandi, Lahore, Pakistan"
