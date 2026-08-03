@@ -18,6 +18,52 @@ interface FormulaMeta {
   faq?: { q: string; a: string }[];
 }
 
+/**
+ * Site-level identity, for the homepage only.
+ *
+ * WebSite makes the site eligible for a sitelinks search box, and gives Google
+ * an explicit name to use rather than one inferred from the title tag.
+ * Organization is what a knowledge panel is built from.
+ */
+export function websiteSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    alternateName: 'ExploreExcel',
+    url: `${SITE.url}/`,
+    description: SITE.tagline,
+    inLanguage: 'en-US',
+    publisher: { '@type': 'Organization', name: SITE.name, url: `${SITE.url}/` },
+  };
+}
+
+export function organizationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: `${SITE.url}/`,
+    logo: `${SITE.url}/og-image.png`,
+    description:
+      'A live, interactive Excel reference. Every formula page carries a working spreadsheet you can edit in the browser.',
+    founder: { '@type': 'Person', name: SITE.author.name },
+  };
+}
+
+/** For an index page that lists things — the formula library, templates, blog. */
+export function collectionSchema(name: string, description: string, path: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name,
+    description,
+    url: `${SITE.url}${path}`,
+    inLanguage: 'en-US',
+    isPartOf: { '@type': 'WebSite', name: SITE.name, url: `${SITE.url}/` },
+  };
+}
+
 /** Article schema — tells Google this is a maintained technical reference. */
 export function articleSchema(f: FormulaMeta) {
   return {

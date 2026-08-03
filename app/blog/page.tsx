@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '@/lib/json-ld';
+import { collectionSchema } from '@/lib/schema';
 import Link from 'next/link';
 import { getPosts } from '@/lib/articles';
 
@@ -13,11 +15,22 @@ export default function BlogPage() {
   const posts = getPosts();
 
   return (
-    <section className="sec">
+    <>
+      <JsonLd
+        data={[
+          collectionSchema(
+            'Explore Excel blog',
+            'Longer pieces on spreadsheet design, troubleshooting and working faster.',
+            '/blog/'
+          ),
+        ]}
+      />
+
+      <section className="sec">
       <div className="shell">
         <div className="sec-head">
           <span className="sec-lab">Blog</span>
-          <h2>Longer pieces on doing this properly</h2>
+          <h1>Longer pieces on doing this properly</h1>
           <p>
             The formula library answers what a function does. This is for the questions
             underneath — how to structure work so it holds up after it leaves your hands.
@@ -46,5 +59,6 @@ export default function BlogPage() {
         </div>
       </div>
     </section>
+    </>
   );
 }

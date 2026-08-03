@@ -210,7 +210,7 @@ input { font-family: inherit; font-size: inherit; }
 .sec-alt { background: var(--paper-alt); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .sec-head { max-width: 600px; margin-bottom: 42px; }
 .sec-lab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--em-700); margin-bottom: 13px; display: block; }
-.sec-head h2 { font-size: 36px; letter-spacing: -0.03em; margin-bottom: 12px; }
+.sec-head h1, .sec-head h2 { font-size: 36px; letter-spacing: -0.03em; margin-bottom: 12px; }
 .sec-head p { color: var(--ink-600); font-size: 17px; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(255px, 1fr)); gap: 16px; }
@@ -335,7 +335,7 @@ input { font-family: inherit; font-size: inherit; }
   .hero-h { font-size: 33px; }
   .art h1 { font-size: 31px; }
   .art h2 { font-size: 24px; }
-  .sec-head h2 { font-size: 27px; }
+  .sec-head h1, .sec-head h2 { font-size: 27px; }
   .sec { padding: 52px 0; }
   .hero { padding: 44px 0 42px; }
   .searchbtn span:first-child { display: none; }

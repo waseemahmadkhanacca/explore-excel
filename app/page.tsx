@@ -1,7 +1,14 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import InteractiveGrid from '@/components/InteractiveGrid';
+import { JsonLd } from '@/lib/json-ld';
 import { getAllFormulas } from '@/lib/content';
+import { organizationSchema, websiteSchema } from '@/lib/schema';
 import type { Sheet } from '@/lib/formula-engine';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 const HERO_SHEET: Sheet = {
   columns: ['A', 'B', 'C', 'D'],
@@ -47,6 +54,8 @@ export default function HomePage() {
 
   return (
     <>
+      <JsonLd data={[websiteSchema(), organizationSchema()]} />
+
       <section className="hero">
         <div className="shell hero-grid">
           <div>

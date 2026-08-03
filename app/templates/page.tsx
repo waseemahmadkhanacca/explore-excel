@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '@/lib/json-ld';
+import { collectionSchema } from '@/lib/schema';
 import TemplateBrowser from '@/components/TemplateBrowser';
 import { TEMPLATES, getTemplateCategories } from '@/lib/templates';
 
@@ -11,11 +13,22 @@ export const metadata: Metadata = {
 
 export default function TemplatesPage() {
   return (
-    <section className="sec">
+    <>
+      <JsonLd
+        data={[
+          collectionSchema(
+            'Free Excel templates',
+            'Free Excel templates, built and verified, with every formula documented.',
+            '/templates/'
+          ),
+        ]}
+      />
+
+      <section className="sec">
       <div className="shell">
         <div className="sec-head">
           <span className="sec-lab">Free templates</span>
-          <h2>Templates that survive contact with real work</h2>
+          <h1>Templates that survive contact with real work</h1>
           <p>
             Every file here was built for an actual task, not as a download magnet. They are
             documented, they do not break when you add a row, and they are free.
@@ -24,5 +37,6 @@ export default function TemplatesPage() {
         <TemplateBrowser templates={TEMPLATES} categories={getTemplateCategories()} />
       </div>
     </section>
+    </>
   );
 }

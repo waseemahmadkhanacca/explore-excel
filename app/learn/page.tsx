@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '@/lib/json-ld';
+import { collectionSchema } from '@/lib/schema';
 import Link from 'next/link';
 import { getGuides } from '@/lib/articles';
 
@@ -13,11 +15,22 @@ export default function LearnPage() {
   const guides = getGuides();
 
   return (
-    <section className="sec">
+    <>
+      <JsonLd
+        data={[
+          collectionSchema(
+            'Excel guides',
+            'Structured Excel guides from the basics through Power Query.',
+            '/learn/'
+          ),
+        ]}
+      />
+
+      <section className="sec">
       <div className="shell">
         <div className="sec-head">
           <span className="sec-lab">Learn</span>
-          <h2>Guides that assume you are busy</h2>
+          <h1>Guides that assume you are busy</h1>
           <p>
             Each one is written for someone who needs to get something done today, not someone
             studying for a certificate. Practical, and honest about what is worth learning and
@@ -39,5 +52,6 @@ export default function LearnPage() {
         </div>
       </div>
     </section>
+    </>
   );
 }
