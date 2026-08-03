@@ -6,13 +6,34 @@ import { SITE } from './schema';
  * Resend is the transport. Everything user-visible is built here so the wording,
  * the unsubscribe link and the plain-text alternative stay in one place.
  *
- * Two things are non-negotiable in every message: a working unsubscribe link,
- * and a plain-text part. The first is a legal requirement for UK and EU
- * recipients; the second stops the message being treated as spam by filters
- * that distrust HTML-only mail.
+ * Three things are non-negotiable in every message: a working unsubscribe link,
+ * a valid physical postal address, and a plain-text part. The first two are
+ * required by the US CAN-SPAM Act (15 U.S.C. 7704(a)(5)), which assesses
+ * penalties per email; the third stops the message being treated as spam by
+ * filters that distrust HTML-only mail.
  */
 
 const FROM = 'Explore Excel <hello@exploreexcel.com>';
+
+/**
+ * CAN-SPAM requires a valid physical postal address in every commercial email.
+ * A PO box registered with the postal service counts, and is what most sole
+ * operators use rather than publishing a home address.
+ *
+ * Set MAILING_ADDRESS in the environment. Sending is blocked without it —
+ * failing loudly is far better than quietly shipping non-compliant mail.
+ */
+export const MAILING_ADDRESS = process.env.MAILING_ADDRESS ?? '';
+
+export function assertMailingAddress(): string {
+  if (!MAILING_ADDRESS.trim()) {
+    throw new Error(
+      'MAILING_ADDRESS is not set. CAN-SPAM requires a physical postal address in every ' +
+        'commercial email, so sending is blocked until one is configured.'
+    );
+  }
+  return MAILING_ADDRESS;
+}
 
 export interface TemplateEmailInput {
   to: string;
@@ -63,6 +84,10 @@ function htmlBody(input: TemplateEmailInput): string {
       You are receiving this because you asked for this file at exploreexcel.com.
       <a href="${unsub}" style="color:#0f6e56;">Unsubscribe</a> at any time — one click, no questions.
     </p>
+
+    <p style="font-size:12px;line-height:1.5;color:#6b6b6b;margin:10px 0 0;">
+      ${escapeHtml(assertMailingAddress())}
+    </p>
   </div>
 </body></html>`;
 }
@@ -83,6 +108,8 @@ function textBody(input: TemplateEmailInput): string {
     '---',
     'You are receiving this because you asked for this file at exploreexcel.com.',
     `Unsubscribe: ${unsubscribeUrl(input.unsubscribeToken)}`,
+    '',
+    assertMailingAddress(),
   ].join('\n');
 }
 

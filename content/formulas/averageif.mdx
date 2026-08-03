@@ -63,7 +63,7 @@ faq:
   - q: How do I stop AVERAGEIF returning #DIV/0!?
     a: Wrap it — =IFERROR(AVERAGEIF(...), "No data"). Do not replace it with zero, because zero is a real average and "nothing matched" is not the same thing.
   - q: Does AVERAGEIF ignore blank cells?
-    a: Yes, and this is its most important behaviour. Blanks are excluded from the calculation entirely. If a blank should count as zero, replace the blanks in the data rather than working around it in the formula.
+    a: Yes, and this is its most important behavior. Blanks are excluded from the calculation entirely. If a blank should count as zero, replace the blanks in the data rather than working around it in the formula.
   - q: Can AVERAGEIF use a comparison against another cell?
     a: Yes, but the operator must be joined on with an ampersand — ">"&F1. Writing ">F1" searches for that literal text.
   - q: Why is my average different from summing and dividing?

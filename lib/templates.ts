@@ -21,7 +21,7 @@ export const TEMPLATES: Template[] = [
     title: 'Monthly budget planner',
     summary: 'Budget against actual, by category, from a transaction log',
     description:
-      'Enter what you plan to spend by category, then log transactions as they happen. Budgeted, actual, variance and percentage used fill in on their own, and a category turns amber at ninety per cent and red once you pass it. Category names come from a dropdown, so a typo cannot quietly split one category into two.',
+      'Enter what you plan to spend by category, then log transactions as they happen. Budgeted, actual, variance and percentage used fill in on their own, and a category turns amber at ninety percent and red once you pass it. Category names come from a dropdown, so a typo cannot quietly split one category into two.',
     category: 'Personal finance',
     difficulty: 'Beginner',
     sheets: 4,
@@ -31,9 +31,9 @@ export const TEMPLATES: Template[] = [
   {
     slug: 'invoice-template',
     title: 'Invoice template',
-    summary: 'Printable invoice with VAT and an outstanding-balance log',
+    summary: 'Printable invoice with sales tax and an outstanding-balance log',
     description:
-      'Your business details go in once on the Settings sheet and flow onto every invoice. Line items total themselves, VAT calculates from a rate you control, and the due date follows your payment terms. A separate log tracks what has been sent and shows what you are still owed.',
+      'Your business details go in once on the Settings sheet and flow onto every invoice. Line items total themselves, sales tax calculates from a rate you control, and the due date follows your payment terms. A separate log tracks what has been sent and shows what you are still owed.',
     category: 'Accounting',
     difficulty: 'Beginner',
     sheets: 4,
@@ -45,7 +45,7 @@ export const TEMPLATES: Template[] = [
     title: 'Project tracker with Gantt',
     summary: 'A Gantt chart drawn entirely by conditional formatting',
     description:
-      'Tasks, owners, dates and progress on the left; a twenty-eight day timeline on the right. There are no shapes and nothing is drawn by hand — each timeline cell fills itself when its date falls inside a task, so changing a date redraws the chart instantly. Weekends shade automatically and completed tasks turn green.',
+      'Tasks, owners, dates and progress on the left; a six-week timeline on the right. There are no shapes and nothing is drawn by hand — each timeline cell fills itself when its date falls inside a task, so changing a date redraws the chart instantly. Weekends shade automatically and completed tasks turn green.',
     category: 'Operations',
     difficulty: 'Intermediate',
     sheets: 3,
@@ -115,9 +115,9 @@ export const TEMPLATES: Template[] = [
   {
     slug: 'invoice-register',
     title: 'Invoice register',
-    summary: 'Ageing buckets and follow-up dates',
+    summary: 'Aging buckets and follow-up dates',
     description:
-      'A receivables register with automatic ageing into current, 30, 60 and 90-plus day buckets, plus a follow-up date column that flags what needs chasing this week.',
+      'A receivables register with automatic aging into current, 30, 60 and 90-plus day buckets, plus a follow-up date column that flags what needs chasing this week.',
     category: 'Accounting',
     difficulty: 'Beginner',
     sheets: 2,
@@ -149,8 +149,8 @@ export const TEMPLATES: Template[] = [
     file: '/downloads/timesheet.xlsx',
   },
   {
-    slug: 'loan-amortisation',
-    title: 'Loan amortisation',
+    slug: 'loan-amortization',
+    title: 'Loan amortization',
     summary: 'Full repayment schedule with extra payments',
     description:
       'Generate a complete repayment schedule from principal, rate and term. Add extra payments at any point and see the effect on interest paid and payoff date.',
@@ -158,7 +158,7 @@ export const TEMPLATES: Template[] = [
     difficulty: 'Intermediate',
     sheets: 2,
     formulas: ['PMT', 'IPMT', 'EOMONTH'],
-    file: '/downloads/loan-amortisation.xlsx',
+    file: '/downloads/loan-amortization.xlsx',
   },
 ];
 

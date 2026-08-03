@@ -44,10 +44,10 @@ mistakes:
     body: This is the whole reason LEN matters. "Southend " and "Southend" look identical in a cell and will never match each other in a lookup. LEN is how you prove which one you have.
   - level: warning
     title: LEN measures the stored value, not the display
-    body: A cell showing £1,200.00 has a stored value of 1200, so LEN returns 4. Number formatting is a mask over the value and LEN sees straight through it.
+    body: A cell showing $1,200.00 has a stored value of 1200, so LEN returns 4. Number formatting is a mask over the value and LEN sees straight through it.
   - level: warning
     title: A date returns five, not ten
-    body: Dates are stored as serial numbers, so LEN of a cell showing 15/01/2026 returns the digits of 46037. To measure the text you can see, wrap it in TEXT first.
+    body: Dates are stored as serial numbers, so LEN of a cell showing 01/15/2026 returns the digits of 46037. To measure the text you can see, wrap it in TEXT first.
   - level: warning
     title: LEN of an empty cell is zero, but so is LEN of a formula returning ""
     body: The two are indistinguishable to LEN even though ISBLANK tells them apart. If the difference matters, test with ISBLANK rather than comparing LEN to zero.

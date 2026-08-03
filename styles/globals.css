@@ -261,10 +261,6 @@ input { font-family: inherit; font-size: inherit; }
 .args td { padding: 10px 13px; border: 1px solid var(--line); color: var(--ink-600); vertical-align: top; }
 .args td:first-child { white-space: nowrap; color: var(--em-700); font-weight: 500; font-family: var(--mono); font-size: 13px; }
 
-.vid { display: flex; align-items: center; gap: 15px; background: var(--paper-alt); border: 1px solid var(--line); border-radius: var(--r-md); padding: 15px 18px; margin: 26px 0; }
-.vid-play { width: 46px; height: 46px; border-radius: 50%; background: var(--em-700); color: #fff; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; padding-left: 3px; }
-.vid-t { font-family: var(--display); font-weight: 600; font-size: 16px; }
-.vid-s { font-size: 13.5px; color: var(--ink-500); }
 
 .cal { border-radius: var(--r-sm); padding: 15px 18px; margin: 16px 0; font-size: 15px; line-height: 1.6; border-left: 3px solid; }
 .cal b { display: block; font-family: var(--display); font-size: 15.5px; margin-bottom: 4px; font-weight: 600; }

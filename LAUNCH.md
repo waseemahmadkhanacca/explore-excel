@@ -140,23 +140,25 @@ Then leave it alone. Indexing takes days to weeks. Checking daily changes nothin
 
 Cloudflare Web Analytics is free, needs no cookie banner because it sets no cookies, and is enabled from the dashboard in one click. Start there.
 
-Google Analytics gives more depth and requires a consent banner in the UK and EU. Add it later if you need the detail.
+Google Analytics gives more depth and needs a consent banner for visitors in several US states. Add it later if you need the detail.
 
 ---
 
 ## 10. Before you take money or run ads
 
-Three things need professional review. They are cheap now and expensive later.
+The site targets the United States. These are the things that need attention, roughly in the order they will bite.
 
-**Privacy and Terms.** Both pages are written to be accurate about what the site does, and both carry a note explaining exactly what to get checked. A data protection consultant or an ICO-registered UK solicitor covers it in about an hour.
+**Mailing address — do this before sending a single email.** CAN-SPAM requires a valid physical postal address in every commercial email, and penalties are assessed *per message*. Set `MAILING_ADDRESS` in your environment; sending is deliberately blocked until you do. A registered PO box counts and is what most sole operators use rather than publishing a home address.
 
-**Cookie consent.** Required once advertising is on. Your ad network will specify the wording and usually provides the banner.
+**Privacy and Terms.** Both pages are written for US state privacy law — the CCPA and its equivalents in Virginia, Colorado, Connecticut, Utah and the states that have followed. They are accurate about what the site actually does. They are not legal advice, and a US attorney should review them before you take money. A privacy-focused attorney covers both in about an hour.
 
-**Tax.** VAT on digital goods sold to UK and EU consumers is owed where the customer is, not where you are. Using a merchant of record — Lemon Squeezy or Paddle — moves that obligation to them. This is the main reason to use one rather than taking card payments directly.
+**Governing law.** The Terms page names Pakistan, where you operate, with an express carve-out preserving US consumers' state-law rights and their small-claims access. That is a defensible position for a solo operator based outside the US, but it is the clause most worth confirming with an attorney — and it changes entirely if you incorporate in the US, in which case name that state instead.
 
-**Governing law.** The Terms page deliberately doesn't name a governing law and jurisdiction — that depends on where you're established and where you'd actually want to enforce a dispute, and a solicitor adds the correct clause in minutes once that's settled.
+**Sales tax.** Unlike VAT, US sales tax is a state matter and depends on *economic nexus* — thresholds of revenue or transactions in each state, commonly $100,000 or 200 transactions per year. Free templates create no liability. The moment you sell, a merchant of record such as Lemon Squeezy or Paddle takes the registration and filing burden across all states, which is the main reason to use one rather than taking card payments directly.
 
-**Consumer rights on digital goods.** Once you sell anything, UK and EU consumer law gives buyers statutory rights including a cooling-off period for digital purchases, which needs to be addressed explicitly in your terms. A merchant of record such as Lemon Squeezy handles much of this for you.
+**Cookie consent.** Required once advertising is on. Your ad network will specify the wording and usually provides the banner. Several states also require honoring the Global Privacy Control signal, which the privacy policy already commits to.
+
+**COPPA.** The site is not directed at children and says so. Keep it that way; if you ever add anything aimed at under-13s, the rules change sharply.
 
 ---
 

@@ -3,7 +3,7 @@ slug: weekday
 name: WEEKDAY
 category: Date
 summary: Find which day of the week a date falls on
-description: WEEKDAY turns a date into a number representing its day of the week. It is how you flag weekend work, drive a rota, or count how many Mondays fall in a period — and its second argument is where most of the confusion lives.
+description: WEEKDAY turns a date into a number representing its day of the week. It is how you flag weekend work, drive a shift schedule, or count how many Mondays fall in a period — and its second argument is where most of the confusion lives.
 versions: [All versions]
 updated: 2026-08-01
 readingTime: 6
@@ -52,7 +52,7 @@ mistakes:
     body: With return_type 2, the weekend is 6 and 7. With the default, it is 1 and 7. A rule written for one and used with the other misclassifies two days a week and looks fine on a spot check.
   - level: warning
     title: Dates stored as text return #VALUE!
-    body: WEEKDAY needs a real date. A cell holding "15/01/2026" as text fails. Dates imported from other systems are text far more often than they look it — a date sitting on the left of its cell rather than the right is the giveaway.
+    body: WEEKDAY needs a real date. A cell holding "01/15/2026" as text fails. Dates imported from other systems are text far more often than they look it — a date sitting on the left of its cell rather than the right is the giveaway.
   - level: warning
     title: Assuming it knows about public holidays
     body: WEEKDAY only knows about the seven-day cycle. Christmas Day on a Thursday is a weekday as far as it is concerned. For working days that account for holidays, use NETWORKDAYS with a holiday list.
@@ -65,7 +65,7 @@ faq:
     a: Use TEXT — =TEXT(A2,"dddd") returns Monday, and "ddd" returns Mon. WEEKDAY gives you a number to calculate with, TEXT gives you a label to read.
   - q: How do I count how many Mondays are in a range?
     a: '=SUMPRODUCT((WEEKDAY(A2:A100, 2) = 1) * 1). SUMPRODUCT applies WEEKDAY to every date and adds up the TRUEs. Multiplying by 1 converts TRUE and FALSE into 1 and 0.'
-  - q: Why does my rota highlight the wrong days?
+  - q: Why does my schedule highlight the wrong days?
     a: Nearly always the missing second argument. A conditional formatting rule written as =WEEKDAY($A2)>5 flags Saturday and Sunday only if you meant the Sunday-first numbering. Add the 2 and the rule matches the week most people work.
 ---
 
@@ -75,7 +75,7 @@ faq:
 
 <Formula>=WEEKDAY(B2)</Formula>
 
-Row 2 is Monday 5 January 2026, and this returns 2 — because with no second argument, Sunday is day 1.
+Row 2 is Monday, January 5, 2026, and this returns 2 — because with no second argument, Sunday is day 1.
 
 ### 2. Starting the week on Monday
 
@@ -84,14 +84,14 @@ Row 2 is Monday 5 January 2026, and this returns 2 — because with no second ar
 The same date now returns 1. This is the numbering nearly every business actually uses, and passing `2` should be your default habit.
 
 <Callout type="warning" title="The second argument is not optional in practice">
-Leaving it out is legal and gives you an American week starting on Sunday. Every downstream test — weekend flags, rota colouring, "is this day 1 of the week" — then has to be written against that numbering. Pass `2` every time and the numbers line up with how you think about the week.
+Leaving it out is legal and gives you an American week starting on Sunday. Every downstream test — weekend flags, schedule coloring, "is this day 1 of the week" — then has to be written against that numbering. Pass `2` every time and the numbers line up with how you think about the week.
 </Callout>
 
 ### 3. Flagging the weekend
 
 <Formula>=IF(WEEKDAY(B4, 2) > 5, "Weekend", "Weekday")</Formula>
 
-Row 4 is Saturday 10 January. With Monday-based numbering, Saturday is 6 and Sunday is 7, so "greater than 5" is the whole test.
+Row 4 is Saturday, January 10. With Monday-based numbering, Saturday is 6 and Sunday is 7, so "greater than 5" is the whole test.
 
 Switch the same date to the default numbering and Saturday becomes 7 while Sunday becomes 1 — which is why a weekend test written for one scheme quietly misclassifies days under the other.
 

@@ -44,7 +44,7 @@ demo:
 mistakes:
   - level: error
     title: Not available in Excel 2016 or earlier
-    body: TEXTJOIN arrived in Excel 2019. Open the file in 2016 and every TEXTJOIN becomes #NAME?. If the file leaves your organisation, chain with ampersands instead or check what the recipient runs.
+    body: TEXTJOIN arrived in Excel 2019. Open the file in 2016 and every TEXTJOIN becomes #NAME?. If the file leaves your organization, chain with ampersands instead or check what the recipient runs.
   - level: warning
     title: Setting ignore_empty to FALSE
     body: With FALSE, blank cells still produce a delimiter, so you get "North,,South" with a gap in the middle. This is occasionally deliberate for fixed-width output, but it is usually a mistake.
@@ -53,7 +53,7 @@ mistakes:
     body: The result cannot exceed a cell's capacity. Joining a very long column returns #VALUE!. If you are near the limit, the output probably belongs somewhere other than a single cell.
   - level: warning
     title: Numbers lose their formatting
-    body: A cell displaying £1,234.00 joins as 1234. Formatting is display only. Wrap the value in TEXT with an explicit format if the appearance matters.
+    body: A cell displaying $1,234.00 joins as 1234. Formatting is display only. Wrap the value in TEXT with an explicit format if the appearance matters.
 faq:
   - q: What is the difference between TEXTJOIN and CONCAT?
     a: CONCAT joins with nothing between and cannot skip blanks. TEXTJOIN adds a delimiter and can ignore empty cells. For anything list-shaped, TEXTJOIN is the better tool.
@@ -79,7 +79,7 @@ One argument covers the entire range. Every city appears in a single cell, comma
 
 <Formula>=TEXTJOIN(" ", TRUE, A2, B2)</Formula>
 
-With TRUE as the second argument, a missing middle name produces no double space. That is the behaviour the old ampersand approach could not manage without extra IF logic.
+With TRUE as the second argument, a missing middle name produces no double space. That is the behavior the old ampersand approach could not manage without extra IF logic.
 
 ### 3. Assembling an address
 

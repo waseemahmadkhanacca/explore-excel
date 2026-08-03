@@ -16,10 +16,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: SITE.name,
-    // The content is written in British English and prices in sterling. The
-    // primary audience is the UK, then Ireland, Australia and the rest of the
+    // The content is written in American English with prices in dollars. The
+    // primary audience is the United States, then Canada and the rest of the
     // English-speaking market.
-    locale: 'en_GB',
+    locale: 'en_US',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: SITE.name }],
   },
   twitter: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-US">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />

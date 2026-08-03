@@ -48,7 +48,7 @@ demo:
 mistakes:
   - level: error
     title: It is case sensitive
-    body: SUBSTITUTE("North","north","South") changes nothing, because the case does not match. REPLACE is not an alternative — it works on positions rather than content. To ignore case you have to normalise with UPPER or LOWER first.
+    body: SUBSTITUTE("North","north","South") changes nothing, because the case does not match. REPLACE is not an alternative — it works on positions rather than content. To ignore case you have to normalize with UPPER or LOWER first.
   - level: warning
     title: Replacing every occurrence when you meant one
     body: Without the fourth argument, every match is replaced. On a reference like REF/2026/0041 that turns all the separators, not just the first. Use instance_num when position matters.

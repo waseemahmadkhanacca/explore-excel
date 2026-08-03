@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description: t.description,
       type: 'article',
       images: ['/og-image.png'],
-      locale: 'en_GB',
+      locale: 'en_US',
     },
   };
 }
@@ -94,7 +94,7 @@ export default async function TemplatePage({ params }: Params) {
           and, importantly, where its limits are.
         </p>
         <p>
-          The colour convention follows the standard used in financial models — blue for
+          The color convention follows the standard used in financial models — blue for
           inputs, black for formulas, green shading for totals — so anyone in a finance or
           audit role will read it without being told.
         </p>

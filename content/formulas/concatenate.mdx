@@ -49,7 +49,7 @@ mistakes:
     body: '=CONCATENATE(A2:A7) does not join a column. Older versions return only the value on the same row, and it is never what you wanted. TEXTJOIN is the function that accepts a range.'
   - level: warning
     title: Numbers lose their formatting
-    body: Joining a cell displaying £1,200.00 gives 1200, because CONCATENATE takes the underlying value and not the format. Wrap it in TEXT with a format string to keep the appearance.
+    body: Joining a cell displaying $1,200.00 gives 1200, because CONCATENATE takes the underlying value and not the format. Wrap it in TEXT with a format string to keep the appearance.
   - level: warning
     title: Dates come through as serial numbers
     body: A date joined into text becomes 46037 rather than 15 Jan 2026. Excel stores dates as numbers and CONCATENATE reads the number. Use TEXT with a date format to convert it first.
@@ -63,7 +63,7 @@ faq:
   - q: How do I join a whole column?
     a: Use TEXTJOIN, which takes a range and a delimiter. CONCATENATE cannot do it, and trying produces a result that looks plausible on the first row and is wrong everywhere else.
   - q: How do I keep currency formatting when joining?
-    a: Wrap the number in TEXT — TEXT(D2,"£#,##0.00") — before joining. Without it you get the raw stored value with no separators or symbol.
+    a: Wrap the number in TEXT — TEXT(D2,"$#,##0.00") — before joining. Without it you get the raw stored value with no separators or symbol.
 ---
 
 ## Examples

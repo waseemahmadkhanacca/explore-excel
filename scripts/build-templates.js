@@ -10,7 +10,7 @@
  * House rules, enforced by the helpers below:
  *   - the palette matches the original templates exactly (see PALETTE)
  *   - gridlines are off on every sheet
- *   - no merged cells anywhere; centreAcross does the same job without the
+ *   - no merged cells anywhere; centerAcross does the same job without the
  *     damage (see content/blog/merged-cells.mdx)
  *   - every column has an explicit width wide enough for its contents, so
  *     nothing ever renders as ####
@@ -45,7 +45,7 @@ const AMBER = 'FF7A5410'; // approaching a limit
 const LINE = 'FFE4E4E0'; // borders
 
 /**
- * The financial-modelling convention the original templates already follow and
+ * The financial-modeling convention the original templates already follow and
  * the website documents: blue for cells you type into, black for calculated
  * cells, green shading for totals. Keep it — finance and audit readers rely on
  * it without being told.
@@ -55,8 +55,8 @@ const INPUT = 'FF0000FF';
 const HEAD_FONT = 'Arial';
 const BODY_FONT = 'Calibri';
 
-const GBP = '"£"#,##0.00';
-const DATE = 'dd mmm yyyy';
+const USD = '"$"#,##0.00';
+const DATE = 'mmm d, yyyy';
 const PCT = '0%';
 
 const thin = { style: 'thin', color: { argb: LINE } };
@@ -87,6 +87,7 @@ function setup(ws, { widths, freeze = [0, 0], landscape = false }) {
   ];
   ws.pageSetup = {
     orientation: landscape ? 'landscape' : 'portrait',
+    paperSize: 1, // US Letter
     fitToPage: true,
     fitToWidth: 1,
     fitToHeight: 0,
@@ -96,7 +97,7 @@ function setup(ws, { widths, freeze = [0, 0], landscape = false }) {
   ws.headerFooter = { oddFooter: '&L&9Explore Excel&R&9Page &P of &N' };
 }
 
-/** Title centred across columns without merging a single cell. */
+/** Title centered across columns without merging a single cell. */
 function titleBlock(ws, row, text, subtitle, lastCol) {
   const t = ws.getCell(row, 1);
   t.value = text;
@@ -200,7 +201,7 @@ function readMe(wb, title, lines) {
   }
 
   const key = ws.getCell(r + 1, 2);
-  key.value = 'Blue text on a cream background marks a cell you fill in. Black text is calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modelling convention.';
+  key.value = 'Blue text on a cream background marks a cell you fill in. Black text is calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modeling convention.';
   key.font = { name: BODY_FONT, size: 9, italic: true, color: { argb: MUTED } };
   key.alignment = { wrapText: true, vertical: 'top' };
   key.fill = fill(MINT);
@@ -280,7 +281,7 @@ async function budgetPlanner() {
 
   const TX_FIRST = 5;
   const TX_LAST = 204;
-  bodyBlock(ts, TX_FIRST, TX_LAST, 1, 5, { 1: DATE, 4: GBP });
+  bodyBlock(ts, TX_FIRST, TX_LAST, 1, 5, { 1: DATE, 4: USD });
 
   // One validation, one range. Cell-by-cell produced overlapping regions.
   ts.dataValidations.add(`C${TX_FIRST}:C${TX_LAST}`, {
@@ -312,7 +313,7 @@ async function budgetPlanner() {
     caption(bs, 4, col, label.toUpperCase());
     const c = bs.getCell(5, col);
     c.value = f;
-    c.numFmt = GBP;
+    c.numFmt = USD;
     c.font = { name: HEAD_FONT, size: 14, bold: true, color: { argb: GREEN_DK } };
     c.fill = fill(MINT);
     c.border = box;
@@ -334,7 +335,7 @@ async function budgetPlanner() {
     bs.getCell(r, 4).value = { formula: `B${r}-C${r}` };
     bs.getCell(r, 5).value = { formula: `IFERROR(C${r}/B${r},0)` };
   });
-  bodyBlock(bs, B_FIRST, B_LAST, 1, 5, { 2: GBP, 3: GBP, 4: GBP, 5: PCT });
+  bodyBlock(bs, B_FIRST, B_LAST, 1, 5, { 2: USD, 3: USD, 4: USD, 5: PCT });
   // Re-apply the cream on the input column, which banding overwrote.
   for (let r = B_FIRST; r <= B_LAST; r++) markInput(bs, r, 2);
 
@@ -344,7 +345,7 @@ async function budgetPlanner() {
   bs.getCell(tRow, 3).value = { formula: `SUM(C${B_FIRST}:C${B_LAST})` };
   bs.getCell(tRow, 4).value = { formula: `SUM(D${B_FIRST}:D${B_LAST})` };
   bs.getCell(tRow, 5).value = { formula: `IFERROR(C${tRow}/B${tRow},0)` };
-  totalRow(bs, tRow, 1, 5, { 2: GBP, 3: GBP, 4: GBP, 5: PCT });
+  totalRow(bs, tRow, 1, 5, { 2: USD, 3: USD, 4: USD, 5: PCT });
 
   bs.addConditionalFormatting({
     ref: `D${B_FIRST}:D${B_LAST}`,
@@ -375,16 +376,16 @@ async function invoice() {
 
   readMe(wb, 'Invoice template', [
     '#What this does',
-    'Produces one printable invoice that totals itself and calculates VAT, plus a log of what you have sent.',
+    'Produces one printable invoice that totals itself and calculates sales tax, plus a log of what you have sent.',
     '',
     '#Using it',
     '1. Fill in your own details once on the Settings sheet. They flow onto every invoice.',
     '2. On the Invoice sheet, fill the cream cells: client block, invoice number and date.',
-    '3. Enter the line items. Amount, subtotal, VAT and total all calculate.',
-    '4. Print to PDF. The page is already set to fit one sheet of A4 portrait.',
+    '3. Enter the line items. Amount, subtotal, sales tax and total all calculate.',
+    '4. Print to PDF. The page is already set to fit one sheet of US Letter portrait.',
     '',
-    '#VAT',
-    'The rate comes from the Settings sheet. Set it to 0 if you are not VAT registered — the line then shows zero rather than disappearing, which is the correct thing to show a client.',
+    '#Sales tax',
+    'The rate comes from the Settings sheet. The 8.25% shown is a placeholder only — sales tax varies by state and often by city, so set the rate that applies where you are. Set it to 0 if you do not collect sales tax; the line then shows zero rather than disappearing, which is the correct thing to show a client.',
     '',
     '#Keeping a record',
     'Add a row to the Invoice log as you send each one. The outstanding figure at the top totals everything still marked Unpaid.',
@@ -396,16 +397,16 @@ async function invoice() {
   titleBlock(st, 1, 'Your details', 'Entered once, used on every invoice', 2);
   headerRow(st, 4, ['Field', 'Value']);
   const settings = [
-    ['Business name', 'Your Business Ltd'],
-    ['Address line 1', '12 Example Street'],
-    ['Address line 2', 'Leeds'],
-    ['Postcode', 'LS1 1AA'],
-    ['Email', 'hello@yourbusiness.co.uk'],
-    ['Phone', '0113 000 0000'],
-    ['VAT number', 'GB000000000'],
-    ['VAT rate', 0.2],
-    ['Bank account name', 'Your Business Ltd'],
-    ['Sort code', '00-00-00'],
+    ['Business name', 'Your Business LLC'],
+    ['Address line 1', '1200 Market Street'],
+    ['Address line 2', 'Suite 400'],
+    ['City, State ZIP', 'Austin, TX 78701'],
+    ['Email', 'hello@yourbusiness.com'],
+    ['Phone', '(512) 555-0100'],
+    ['EIN or Tax ID', '00-0000000'],
+    ['Sales tax rate', 0.0825],
+    ['Bank account name', 'Your Business LLC'],
+    ['Routing number', '000000000'],
     ['Account number', '00000000'],
     ['Payment terms (days)', 30],
   ];
@@ -419,9 +420,9 @@ async function invoice() {
   });
   bodyBlock(st, S_FIRST, S_FIRST + settings.length - 1, 1, 2);
   for (let i = 0; i < settings.length; i++) markInput(st, S_FIRST + i, 2);
-  const VAT_CELL = `Settings!$B$${S_FIRST + 7}`;
+  const TAX_CELL = `Settings!$B$${S_FIRST + 7}`;
   const TERMS_CELL = `Settings!$B$${S_FIRST + 11}`;
-  st.getCell(S_FIRST + 7, 2).numFmt = PCT;
+  st.getCell(S_FIRST + 7, 2).numFmt = '0.000%'; // US rates carry decimals, e.g. 8.25%
 
   // --- Invoice ----------------------------------------------------
   const inv = wb.addWorksheet('Invoice', { properties: { tabColor: { argb: GREEN } } });
@@ -467,7 +468,7 @@ async function invoice() {
   billTo.font = head();
   billTo.fill = fill(GREEN);
   billTo.border = box;
-  ['Client name', 'Client address', 'Town', 'Postcode'].forEach((v, i) => {
+  ['Client name', 'Client address', 'City, State ZIP', 'Country'].forEach((v, i) => {
     const c = inv.getCell(8 + i, 1);
     c.value = v;
     c.font = body();
@@ -493,7 +494,7 @@ async function invoice() {
     }
     inv.getCell(r, 4).value = { formula: `IF(B${r}="","",B${r}*C${r})` };
   }
-  bodyBlock(inv, L_FIRST, L_LAST, 1, 4, { 3: GBP, 4: GBP });
+  bodyBlock(inv, L_FIRST, L_LAST, 1, 4, { 3: USD, 4: USD });
   for (let r = L_FIRST; r <= L_LAST; r++) {
     [1, 2, 3].forEach((c) => markInput(inv, r, c));
   }
@@ -501,7 +502,7 @@ async function invoice() {
   const SUB = L_LAST + 1;
   [
     ['Subtotal', { formula: `SUM(D${L_FIRST}:D${L_LAST})` }],
-    ['VAT', { formula: `ROUND(D${SUB}*${VAT_CELL},2)` }],
+    ['Sales tax', { formula: `ROUND(D${SUB}*${TAX_CELL},2)` }],
     ['Total due', { formula: `D${SUB}+D${SUB + 1}` }],
   ].forEach(([label, v], i) => {
     const r = SUB + i;
@@ -513,7 +514,7 @@ async function invoice() {
     if (i === 2) lc.fill = fill(GREEN);
     const vc = inv.getCell(r, 4);
     vc.value = v;
-    vc.numFmt = GBP;
+    vc.numFmt = USD;
     vc.border = box;
     vc.font = i === 2 ? head({ size: 12 }) : body();
     if (i === 2) vc.fill = fill(GREEN);
@@ -523,7 +524,7 @@ async function invoice() {
   const payHead = inv.getCell(PAY, 1);
   payHead.value = 'Payment details';
   payHead.font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
-  [['Account name', 8], ['Sort code', 9], ['Account number', 10]].forEach(([k, n], i) => {
+  [['Account name', 8], ['Routing number', 9], ['Account number', 10]].forEach(([k, n], i) => {
     inv.getCell(PAY + 1 + i, 1).value = k;
     inv.getCell(PAY + 1 + i, 1).font = { name: BODY_FONT, size: 9, color: { argb: MUTED } };
     inv.getCell(PAY + 1 + i, 2).value = { formula: `Settings!B${S_FIRST + n}` };
@@ -543,7 +544,7 @@ async function invoice() {
   caption(log, 4, 1, 'OUTSTANDING');
   const outstanding = log.getCell(5, 1);
   outstanding.value = { formula: `SUMIFS(E${LOG_FIRST}:E${LOG_LAST},F${LOG_FIRST}:F${LOG_LAST},"Unpaid")` };
-  outstanding.numFmt = GBP;
+  outstanding.numFmt = USD;
   outstanding.font = { name: HEAD_FONT, size: 14, bold: true, color: { argb: RED } };
   outstanding.fill = fill(MINT);
   outstanding.border = box;
@@ -552,11 +553,11 @@ async function invoice() {
 
   headerRow(log, 7, ['Invoice number', 'Client', 'Issued', 'Due', 'Amount', 'Status']);
   [
-    ['INV-0001', 'Northaero Ltd', 46030, 46060, 2020, 'Unpaid'],
+    ['INV-0001', 'Northaero Inc', 46030, 46060, 2020, 'Unpaid'],
     ['INV-0002', 'Southend Components', 46033, 46063, 780, 'Paid'],
   ].forEach((row, i) => row.forEach((v, c) => (log.getCell(LOG_FIRST + i, c + 1).value = v)));
 
-  bodyBlock(log, LOG_FIRST, LOG_LAST, 1, 6, { 3: DATE, 4: DATE, 5: GBP });
+  bodyBlock(log, LOG_FIRST, LOG_LAST, 1, 6, { 3: DATE, 4: DATE, 5: USD });
   log.dataValidations.add(`F${LOG_FIRST}:F${LOG_LAST}`, {
     type: 'list', allowBlank: true,
     formulae: ['"Unpaid,Paid,Overdue,Written off"'],
@@ -750,7 +751,7 @@ async function attendance() {
     '4. The Summary sheet totals the whole team.',
     '',
     '#The codes',
-    'P present, H holiday, S sick, L late, R remote, U unpaid leave, X public holiday. Each one colours its own cell so a month reads at a glance.',
+    'P present, V vacation, S sick, L late, R remote, U unpaid leave, X company holiday. Each one colours its own cell so a month reads at a glance.',
     '',
     '#Why the dropdown matters',
     'A tracker breaks the moment someone types "p" one day and "Present" the next, because COUNTIF treats them as different values. The dropdown makes that impossible, which is why the whole grid carries one.',
@@ -758,12 +759,12 @@ async function attendance() {
 
   const codes = [
     ['P', 'Present', GREEN, 'Working days'],
-    ['H', 'Holiday', 'FF2E6E8E', 'Annual leave entitlement'],
+    ['V', 'Vacation', 'FF2E6E8E', 'Paid time off entitlement'],
     ['S', 'Sick', RED, 'Sickness absence'],
     ['L', 'Late', AMBER, 'Working days, flagged'],
     ['R', 'Remote', GREEN_DK, 'Working days'],
     ['U', 'Unpaid leave', MUTED, 'Unpaid absence'],
-    ['X', 'Public holiday', 'FF6E6E6C', 'Not counted as absence'],
+    ['X', 'Company holiday', 'FF6E6E6C', 'Not counted as absence'],
   ];
 
   const cs = wb.addWorksheet('Codes', { properties: { tabColor: { argb: MUTED } } });

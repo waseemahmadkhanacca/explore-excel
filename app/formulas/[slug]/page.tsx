@@ -9,7 +9,6 @@ import {
   articleSchema,
   breadcrumbSchema,
   faqSchema,
-  videoSchema,
 } from '@/lib/schema';
 
 interface Params {
@@ -37,7 +36,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       // Defining openGraph here replaces the one in layout.tsx wholesale, so
       // the image has to be repeated. Without it every share is a bare link.
       images: ['/og-image.png'],
-      locale: 'en_GB',
+      locale: 'en_US',
     },
   };
 }
@@ -58,7 +57,6 @@ export default async function FormulaPage({ params }: Params) {
       { name: 'Formulas', path: '/formulas/' },
       { name: f.name, path: `/formulas/${f.slug}/` },
     ]),
-    videoSchema(f),
   ];
 
   return (
@@ -91,7 +89,7 @@ export default async function FormulaPage({ params }: Params) {
             <div className="art-meta">
               <span>
                 Updated{' '}
-                {new Date(f.updated).toLocaleDateString('en-GB', {
+                {new Date(f.updated).toLocaleDateString('en-US', {
                   month: 'long',
                   year: 'numeric',
                 })}
@@ -138,18 +136,6 @@ export default async function FormulaPage({ params }: Params) {
               </tbody>
             </table>
           </div>
-
-          {f.video && (
-            <div className="vid">
-              <div className="vid-play" aria-hidden="true">
-                ▶
-              </div>
-              <div>
-                <div className="vid-t">{f.name} in 90 seconds</div>
-                <div className="vid-s">Watch on the Explore Excel channel</div>
-              </div>
-            </div>
-          )}
 
           <FormulaBody source={f.body} />
 

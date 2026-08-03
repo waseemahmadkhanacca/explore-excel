@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       publishedTime: p.updated,
       // Replaces layout.tsx's openGraph entirely, so the image must repeat.
       images: ['/og-image.png'],
-      locale: 'en_GB',
+      locale: 'en_US',
     },
   };
 }
@@ -81,7 +81,7 @@ export default async function PostPage({ params }: Params) {
           <p className="lede">{post.summary}</p>
           <div className="art-meta" style={{ marginBottom: 34 }}>
             <span>
-              {new Date(post.updated).toLocaleDateString('en-GB', {
+              {new Date(post.updated).toLocaleDateString('en-US', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',

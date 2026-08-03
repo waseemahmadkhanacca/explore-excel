@@ -30,9 +30,9 @@ On the technical merits XLOOKUP wins on everything except the row that matters m
 
 If the answer is "me and my team, all on Microsoft 365", use XLOOKUP. It is clearer, it is shorter, and its fourth argument removes the need to wrap it in `IFERROR`.
 
-If the answer includes anyone outside your organisation — clients, auditors, suppliers, a regulator — you have a problem. XLOOKUP returns `#NAME?` in Excel 2019 and earlier. The file does not degrade gracefully. It arrives visibly broken, and the recipient's conclusion is that you sent them something faulty.
+If the answer includes anyone outside your organization — clients, auditors, suppliers, a regulator — you have a problem. XLOOKUP returns `#NAME?` in Excel 2019 and earlier. The file does not degrade gracefully. It arrives visibly broken, and the recipient's conclusion is that you sent them something faulty.
 
-Plenty of organisations run Excel 2019 or 2016, particularly in regulated industries where upgrades are slow. In audit work I still see it regularly.
+Plenty of organizations run Excel 2019 or 2016, particularly in regulated industries where upgrades are slow. In audit work I still see it regularly.
 
 ## Why VLOOKUP's weakness is worse than it sounds
 
@@ -72,7 +72,7 @@ Two conditions must hold: the lookup column is numeric, and it is sorted ascendi
 
 **Internal file, modern Excel:** XLOOKUP. Use the fourth argument rather than wrapping in IFERROR.
 
-**Leaving the organisation:** INDEX/MATCH. Slightly longer, works everywhere, no apology needed.
+**Leaving the organization:** INDEX/MATCH. Slightly longer, works everywhere, no apology needed.
 
 **Existing VLOOKUP that works:** leave it. Rewriting working formulas introduces risk for no gain. Change it when you are editing that area anyway.
 

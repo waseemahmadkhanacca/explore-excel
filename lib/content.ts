@@ -32,7 +32,6 @@ export interface Formula {
   versions: string[];
   updated: string;
   readingTime: number;
-  video?: string;
   practiceFile?: string;
   related: string[];
   syntax: string;
@@ -55,7 +54,6 @@ function toFormula(slug: string, data: Record<string, unknown>, body: string): F
     versions: (data.versions as string[]) ?? [],
     updated: String(data.updated),
     readingTime: Number(data.readingTime ?? 5),
-    video: data.video as string | undefined,
     practiceFile: data.practiceFile as string | undefined,
     related: (data.related as string[]) ?? [],
     syntax: String(data.syntax),

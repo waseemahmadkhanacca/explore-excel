@@ -53,7 +53,7 @@ mistakes:
     body: More than three levels of IF becomes very hard to follow and to fix. Use IFS instead, or a lookup table. If you are writing the fifth nested IF, the problem is the approach rather than the formula.
   - level: warning
     title: Testing text with = when case matters
-    body: The = comparison ignores case, so "north" equals "North". If case genuinely matters, use EXACT. Most of the time the case-insensitive behaviour is what you want, but it can hide duplicates you needed to spot.
+    body: The = comparison ignores case, so "north" equals "North". If case genuinely matters, use EXACT. Most of the time the case-insensitive behavior is what you want, but it can hide duplicates you needed to spot.
 faq:
   - q: How many IFs can I nest?
     a: Excel allows 64 levels. Readability collapses well before that, usually around three. Past that point, use IFS, or put the logic in a lookup table where it can be seen and changed without editing formulas.

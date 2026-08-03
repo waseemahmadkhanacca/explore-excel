@@ -30,7 +30,7 @@ export default function BlogPage() {
               <div className="post-meta">
                 <span className="post-cat">{p.category}</span>
                 <span>
-                  {new Date(p.updated).toLocaleDateString('en-GB', {
+                  {new Date(p.updated).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'long',
                     year: 'numeric',

@@ -49,10 +49,10 @@ mistakes:
     body: EDATE keeps the same day of the month. EOMONTH always lands on the last day. For a payment due on the 15th, EDATE is right. For a period end, EOMONTH is right.
   - level: warning
     title: Assuming month end means payment due
-    body: EOMONTH plus a number of days gives an end-of-month-plus-terms date, but many organisations pay on a fixed day rather than a rolling one. Check the actual terms before building the logic.
+    body: EOMONTH plus a number of days gives an end-of-month-plus-terms date, but many organizations pay on a fixed day rather than a rolling one. Check the actual terms before building the logic.
   - level: warning
     title: Passing text instead of a date
-    body: A date written as the text 2026-01-15 may work or may give #VALUE!, depending on regional settings. Use DATE(2026,1,15) or a real date cell so the behaviour is the same everywhere.
+    body: A date written as the text 2026-01-15 may work or may give #VALUE!, depending on regional settings. Use DATE(2026,1,15) or a real date cell so the behavior is the same everywhere.
 faq:
   - q: How do I get the first day of a month?
     a: Take the end of the previous month and add one — =EOMONTH(A2,-1)+1. There is no FIRSTOFMONTH function, and this idiom is the standard workaround.

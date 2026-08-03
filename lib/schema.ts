@@ -83,16 +83,3 @@ export function breadcrumbSchema(trail: { name: string; path: string }[]) {
   };
 }
 
-/** Video schema makes the page eligible for a video thumbnail in results. */
-export function videoSchema(f: FormulaMeta) {
-  if (!f.video) return null;
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'VideoObject',
-    name: `${f.name} in Excel — explained in 90 seconds`,
-    description: f.description,
-    uploadDate: f.updated,
-    contentUrl: f.video,
-    embedUrl: f.video,
-  };
-}

@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       description: g.description,
       type: 'article',
       images: ['/og-image.png'],
-      locale: 'en_GB',
+      locale: 'en_US',
     },
   };
 }
@@ -82,7 +82,7 @@ export default async function GuidePage({ params }: Params) {
           <div className="art-meta" style={{ marginBottom: 34 }}>
             <span>
               Updated{' '}
-              {new Date(guide.updated).toLocaleDateString('en-GB', {
+              {new Date(guide.updated).toLocaleDateString('en-US', {
                 month: 'long',
                 year: 'numeric',
               })}
