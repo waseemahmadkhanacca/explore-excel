@@ -5,6 +5,7 @@ import InteractiveGrid from '@/components/InteractiveGrid';
 import FormulaBody from '@/components/FormulaBody';
 import { JsonLd } from '@/lib/json-ld';
 import { getAllFormulas, getFormula, getFormulaSlugs } from '@/lib/content';
+import { categorySlug } from '@/lib/categories';
 import {
   articleSchema,
   breadcrumbSchema,
@@ -48,6 +49,7 @@ export default async function FormulaPage({ params }: Params) {
 
   const all = getAllFormulas();
   const related = all.filter((x) => f.related.includes(x.name));
+  const catSlug = categorySlug(f.category);
 
   const schemas = [
     articleSchema(f),
@@ -77,7 +79,13 @@ export default async function FormulaPage({ params }: Params) {
         <article className="art">
           <header className="art-head">
             <div className="art-tags">
-              <span className="tg">{f.category}</span>
+              {catSlug ? (
+                <Link className="tg tg-link" href={`/formulas/category/${catSlug}/`}>
+                  {f.category}
+                </Link>
+              ) : (
+                <span className="tg">{f.category}</span>
+              )}
               {f.versions.map((v) => (
                 <span className="tg" key={v}>
                   {v}

@@ -3,6 +3,7 @@ import CommandPalette, { type SearchItem } from './CommandPalette';
 import { getAllFormulas } from '@/lib/content';
 import { TEMPLATES } from '@/lib/templates';
 import { getGuides } from '@/lib/articles';
+import { CATEGORIES } from '@/lib/categories';
 
 /**
  * The search index is assembled on the server and passed to the client
@@ -35,6 +36,15 @@ function buildSearchIndex(): SearchItem[] {
     keywords: `${g.level ?? ''} ${g.description}`,
   }));
 
+  const allFormulas = getAllFormulas();
+  const categories = CATEGORIES.map((c) => ({
+    label: c.h1,
+    sub: `${allFormulas.filter((f) => f.category === c.category).length} functions`,
+    href: `/formulas/category/${c.slug}/`,
+    group: 'Category',
+    keywords: c.description,
+  }));
+
   const pages: SearchItem[] = [
     { label: 'Formula library', sub: 'Every formula with a live example', href: '/formulas/', group: 'Page' },
     { label: 'Free templates', sub: 'Cash flow, budgets, reconciliation', href: '/templates/', group: 'Page' },
@@ -45,7 +55,7 @@ function buildSearchIndex(): SearchItem[] {
     { label: 'Contact', sub: 'Corrections and requests', href: '/contact/', group: 'Page' },
   ];
 
-  return [...formulas, ...guides, ...templates, ...pages];
+  return [...formulas, ...categories, ...guides, ...templates, ...pages];
 }
 
 function Chevron() {
@@ -66,21 +76,13 @@ export function BrandMark() {
   );
 }
 
-/** Plain-English names for the category values used in the MDX frontmatter. */
-const CATEGORY_LABELS: Record<string, string> = {
-  Lookup: 'Lookup and reference',
-  Math: 'Maths and statistics',
-  Logical: 'Logical tests',
-  Text: 'Working with text',
-  Date: 'Dates and time',
-  'Dynamic array': 'Dynamic arrays',
-};
-
 /**
  * Built from the content rather than hardcoded, so a new formula page appears
- * in the menu on its own. Each entry links to the library filtered to that
- * category — previously they all pointed at the unfiltered list, which made
- * every item in the menu do the same thing.
+ * in the menu on its own.
+ *
+ * Each entry links to a real category page. They used to point at
+ * /formulas/?category=X, which was one page behind six query strings — Search
+ * Console reported all six as duplicates, and none of them could rank.
  */
 function buildFormulaGroups() {
   const byCategory = new Map<string, string[]>();
@@ -90,14 +92,18 @@ function buildFormulaGroups() {
     byCategory.set(f.category, list);
   }
 
-  return [...byCategory.entries()]
-    .sort((a, b) => b[1].length - a[1].length)
-    .map(([category, names]) => ({
-      category,
-      label: CATEGORY_LABELS[category] ?? category,
+  return CATEGORIES.map((c) => {
+    const names = byCategory.get(c.category) ?? [];
+    return {
+      slug: c.slug,
+      category: c.category,
+      label: c.h1.replace('Excel ', ''),
       fns: names.slice(0, 3).join(' · '),
       count: names.length,
-    }));
+    };
+  })
+    .filter((g) => g.count > 0)
+    .sort((a, b) => b.count - a.count);
 }
 
 export default function Header() {
@@ -121,10 +127,7 @@ export default function Header() {
             </Link>
             <div className="dd dd-wide">
               {formulaGroups.map((g) => (
-                <Link
-                  key={g.category}
-                  href={`/formulas/?category=${encodeURIComponent(g.category)}`}
-                >
+                <Link key={g.category} href={`/formulas/category/${g.slug}/`}>
                   <div className="dm">{g.fns}</div>
                   <div className="ds">
                     {g.label} · {g.count} formula{g.count === 1 ? '' : 's'}

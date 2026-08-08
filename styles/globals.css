@@ -485,3 +485,11 @@ a.tpl { display: flex; }
    rather than forcing the whole page wider. */
 .table-scroll { overflow-x: auto; margin: 18px 0 26px; -webkit-overflow-scrolling: touch; }
 .table-scroll .args { margin: 0; min-width: 420px; }
+
+/* A category tag that is also a link through to the category page. */
+.tg-link { transition: 0.14s; }
+.tg-link:hover { background: var(--em-50); color: var(--em-700); border-color: var(--em-700); }
+
+/* Category landing page intro copy. */
+.cat-intro { max-width: 68ch; margin-bottom: 40px; }
+.cat-intro p { font-size: 16px; line-height: 1.7; color: var(--ink-700); margin-bottom: 16px; }

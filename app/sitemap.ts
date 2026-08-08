@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getAllFormulas } from '@/lib/content';
 import { getGuides, getPosts } from '@/lib/articles';
 import { TEMPLATES } from '@/lib/templates';
+import { CATEGORIES } from '@/lib/categories';
 import { SITE } from '@/lib/schema';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -10,6 +11,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(f.updated),
     changeFrequency: 'monthly' as const,
     priority: 0.8,
+  }));
+
+  // Priority sits above the individual formula pages: a category page targets a
+  // broader term and is the better entry point into the library.
+  const categories = CATEGORIES.map((c) => ({
+    url: `${SITE.url}/formulas/category/${c.slug}/`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
   }));
 
   const staticPages = [
@@ -51,5 +61,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...formulas, ...guides, ...posts, ...templates];
+  return [...staticPages, ...categories, ...formulas, ...guides, ...posts, ...templates];
 }
