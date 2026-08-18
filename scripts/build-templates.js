@@ -52,20 +52,59 @@ const LINE = 'FFE4E4E0'; // borders
  */
 const INPUT = 'FF0000FF';
 
-// The originals are Arial 10 throughout. Nothing uses Calibri.
-const HEAD_FONT = 'Arial';
-const BODY_FONT = 'Arial';
-
 /**
- * Accounting formats, taken from the original workbooks rather than invented.
- * Negatives in parentheses and a dash for zero is what a finance reader
- * expects, and it keeps a column of figures aligned on the decimal point where
- * a currency symbol in each cell does not.
+ * Two visual themes.
+ *
+ * `house` reproduces the eight original hand-built workbooks exactly: Arial 10
+ * throughout, accounting number formats with negatives in parentheses and a
+ * dash for zero, and a solid green banner with white type.
+ *
+ * `modern` is the lighter treatment — Calibri body text, explicit dollar signs,
+ * a white title block with the heading in dark green. Kept so the two can be
+ * compared side by side before settling on one for the whole library.
+ *
+ * Templates call setTheme() as their first statement. Everything downstream
+ * reads these bindings at call time, so switching themes needs no other change.
  */
-const USD = '#,##0;(#,##0);-'; // whole dollars, the default here
-const USD2 = '#,##0.00;(#,##0.00);"-"'; // where cents matter
-const DATE = 'dd-mmm-yy';
-const PCT = '0.0%;(0.0%);-';
+const THEMES = {
+  house: {
+    headFont: 'Arial',
+    bodyFont: 'Arial',
+    money: '#,##0;(#,##0);-',
+    money2: '#,##0.00;(#,##0.00);"-"',
+    date: 'dd-mmm-yy',
+    pct: '0.0%;(0.0%);-',
+    greenBanner: true,
+  },
+  modern: {
+    headFont: 'Arial',
+    bodyFont: 'Calibri',
+    money: '"$"#,##0.00',
+    money2: '"$"#,##0.00',
+    date: 'mmm d, yyyy',
+    pct: '0.0%',
+    greenBanner: false,
+  },
+};
+
+let THEME = THEMES.house;
+let HEAD_FONT = THEME.headFont;
+let BODY_FONT = THEME.bodyFont;
+let USD = THEME.money;
+let USD2 = THEME.money2;
+let DATE = THEME.date;
+let PCT = THEME.pct;
+
+function setTheme(name) {
+  THEME = THEMES[name];
+  if (!THEME) throw new Error(`Unknown theme: ${name}`);
+  HEAD_FONT = THEME.headFont;
+  BODY_FONT = THEME.bodyFont;
+  USD = THEME.money;
+  USD2 = THEME.money2;
+  DATE = THEME.date;
+  PCT = THEME.pct;
+}
 
 const thin = { style: 'thin', color: { argb: LINE } };
 const box = { top: thin, left: thin, bottom: thin, right: thin };
@@ -115,6 +154,28 @@ function setup(ws, { widths, freeze = [0, 0], landscape = false }) {
  * without exceptions.
  */
 function titleBlock(ws, row, text, subtitle, lastCol) {
+  if (!THEME.greenBanner) {
+    // modern: dark green heading on white, centered across the sheet.
+    const t = ws.getCell(row, 1);
+    t.value = text;
+    t.font = { name: HEAD_FONT, size: 15, bold: true, color: { argb: GREEN_DK } };
+    for (let c = 1; c <= lastCol; c++) {
+      ws.getCell(row, c).alignment = { horizontal: 'centerContinuous', vertical: 'middle' };
+    }
+    ws.getRow(row).height = 26;
+
+    if (subtitle) {
+      const s = ws.getCell(row + 1, 1);
+      s.value = subtitle;
+      s.font = { name: BODY_FONT, size: 10, italic: true, color: { argb: MUTED } };
+      for (let c = 1; c <= lastCol; c++) {
+        ws.getCell(row + 1, c).alignment = { horizontal: 'centerContinuous' };
+      }
+      ws.getRow(row + 1).height = 16;
+    }
+    return;
+  }
+
   for (let c = 1; c <= lastCol; c++) {
     const cell = ws.getCell(row, c);
     cell.fill = fill(GREEN);
@@ -1259,6 +1320,342 @@ async function personalBudgetPlanner() {
 }
 
 // ---------------------------------------------------------------
+// 6. Debt payoff calculator — snowball against avalanche
+// ---------------------------------------------------------------
+
+/**
+ * Five debts, deliberately chosen so the two methods disagree. Snowball takes
+ * the smallest balance first, avalanche the highest rate, and with this data
+ * those are different orders — which is the whole point of the comparison.
+ */
+const DEBTS = [
+  ['Store card', 900, 0.0699, 25],
+  ['Credit card A', 6400, 0.2499, 160],
+  ['Credit card B', 2100, 0.1899, 55],
+  ['Auto loan', 11200, 0.0549, 310],
+  ['Medical bill', 3500, 0.0, 100],
+];
+const EXTRA_PAYMENT = 250;
+const START_SERIAL = 46023; // 1 January 2026
+const HORIZON = 120; // ten years of rows; unused months simply show zero
+
+// Debts sheet geometry, shared with the verification script.
+const D = {
+  head: 4,
+  first: 5,
+  get last() { return this.first + DEBTS.length - 1; },
+  get totals() { return this.last + 1; },
+  get planHead() { return this.totals + 2; },
+  get extra() { return this.planHead + 1; },
+  get startDate() { return this.planHead + 2; },
+  get commitment() { return this.planHead + 3; },
+  get checkHead() { return this.planHead + 5; },
+  get check() { return this.checkHead + 1; },
+};
+
+// Method sheet geometry.
+const S = {
+  nameRow: 4, aprRow: 5, minRow: 6, orderRow: 7,
+  head: 9, opening: 10,
+  get first() { return this.opening + 1; },
+  get last() { return this.first + HORIZON - 1; },
+  intCol: 3, // C..G
+  payCol: 8, // H..L
+  balCol: 13, // M..Q
+  totalPay: 18, // R
+  totalInt: 19, // S
+  remaining: 20, // T
+  pool: 21, // U
+  flagCol: 22, // V..Z
+};
+
+const L = (n) => {
+  let s = '';
+  while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; }
+  return s;
+};
+
+function methodSheet(wb, name, orderColumn, tint) {
+  const ws = wb.addWorksheet(name, { properties: { tabColor: { argb: tint } } });
+  const nd = DEBTS.length;
+  const iC = L(S.intCol), iG = L(S.intCol + nd - 1);
+  const pH = L(S.payCol), pL = L(S.payCol + nd - 1);
+  const bM = L(S.balCol), bQ = L(S.balCol + nd - 1);
+  const fV = L(S.flagCol), fZ = L(S.flagCol + nd - 1);
+  const oC = L(S.intCol), oG = L(S.intCol + nd - 1); // order row shares C..G
+
+  setup(ws, {
+    widths: [8, 14].concat(Array(nd).fill(11)).concat(Array(nd).fill(11))
+      .concat(Array(nd).fill(12)).concat([13, 12, 13, 11]).concat(Array(nd).fill(7)),
+    freeze: [2, S.head],
+    landscape: true,
+  });
+
+  titleBlock(ws, 1, `${name} method`, 'Every month, every debt, to the dollar', S.flagCol + nd - 1);
+
+  // Fixed facts about each debt, pulled across so the schedule below can read
+  // them from one row rather than reaching into the Debts sheet every time.
+  const labels = [[S.nameRow, 'Debt', 'A'], [S.aprRow, 'Rate', 'C'],
+                  [S.minRow, 'Minimum', 'D'], [S.orderRow, 'Order paid', orderColumn]];
+  labels.forEach(([row, label, srcCol]) => {
+    ws.getCell(row, 1).value = label;
+    ws.getCell(row, 1).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    for (let d = 0; d < nd; d++) {
+      const cell = ws.getCell(row, S.intCol + d);
+      cell.value = { formula: `Debts!$${srcCol}$${D.first + d}` };
+      cell.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+      cell.alignment = { horizontal: 'center' };
+      if (row === S.aprRow) cell.numFmt = '0.00%';
+      if (row === S.minRow) cell.numFmt = USD;
+      cell.fill = fill(MINT);
+      cell.border = box;
+    }
+  });
+
+  // Schedule header. Three blocks of one column per debt, then the totals.
+  const head = ['Month', 'Date'];
+  for (let d = 0; d < nd; d++) head.push(`Interest ${d + 1}`);
+  for (let d = 0; d < nd; d++) head.push(`Payment ${d + 1}`);
+  for (let d = 0; d < nd; d++) head.push(`Balance ${d + 1}`);
+  head.push('Total paid', 'Interest', 'Owed after', 'Snowball');
+  for (let d = 0; d < nd; d++) head.push(`t${d + 1}`);
+  headerRow(ws, S.head, head);
+
+  // Month zero: opening balances, nothing paid yet.
+  ws.getCell(S.opening, 1).value = 0;
+  ws.getCell(S.opening, 2).value = { formula: `Debts!$B$${D.startDate}` };
+  ws.getCell(S.opening, 2).numFmt = DATE;
+  for (let d = 0; d < nd; d++) {
+    ws.getCell(S.opening, S.balCol + d).value = { formula: `Debts!$B$${D.first + d}` };
+  }
+  ws.getCell(S.opening, S.remaining).value = { formula: `SUM(${bM}${S.opening}:${bQ}${S.opening})` };
+
+  for (let r = S.first; r <= S.last; r++) {
+    const prev = r - 1;
+    ws.getCell(r, 1).value = { formula: `A${prev}+1` };
+    // EDATE from the fixed start rather than from the previous row, so a long
+    // schedule cannot drift and month ends behave (Jan 31 -> Feb 28).
+    ws.getCell(r, 2).value = { formula: `EDATE(Debts!$B$${D.startDate},A${r})` };
+    ws.getCell(r, 2).numFmt = DATE;
+
+    // Money freed up by debts already cleared, added to the extra payment.
+    ws.getCell(r, S.pool).value = {
+      formula: `Debts!$B$${D.extra}+SUMPRODUCT(($${bM}${prev}:$${bQ}${prev}<=0)*$${oC}$${S.minRow}:$${oG}$${S.minRow})`,
+    };
+
+    for (let d = 0; d < nd; d++) {
+      const bal = `${L(S.balCol + d)}${prev}`;
+      const apr = `$${L(S.intCol + d)}$${S.aprRow}`;
+      const min = `$${L(S.intCol + d)}$${S.minRow}`;
+      const ord = `$${L(S.intCol + d)}$${S.orderRow}`;
+      const int = `${L(S.intCol + d)}${r}`;
+      const flag = `${L(S.flagCol + d)}${r}`;
+
+      // This debt is the target when it still owes and every higher-priority
+      // debt is already clear.
+      ws.getCell(r, S.flagCol + d).value = {
+        formula: `IF(AND(${bal}>0,SUMPRODUCT(($${oC}$${S.orderRow}:$${oG}$${S.orderRow}<${ord})*($${bM}${prev}:$${bQ}${prev}>0))=0),1,0)`,
+      };
+      ws.getCell(r, S.intCol + d).value = {
+        formula: `IF(${bal}<=0,0,ROUND(${bal}*${apr}/12,2))`,
+      };
+      ws.getCell(r, S.payCol + d).value = {
+        formula: `IF(${bal}<=0,0,MIN(${bal}+${int},${min}+${flag}*$${L(S.pool)}${r}))`,
+      };
+      ws.getCell(r, S.balCol + d).value = {
+        formula: `ROUND(${bal}+${int}-${L(S.payCol + d)}${r},2)`,
+      };
+    }
+
+    ws.getCell(r, S.totalPay).value = { formula: `SUM(${pH}${r}:${pL}${r})` };
+    ws.getCell(r, S.totalInt).value = { formula: `SUM(${iC}${r}:${iG}${r})` };
+    ws.getCell(r, S.remaining).value = { formula: `SUM(${bM}${r}:${bQ}${r})` };
+  }
+
+  const money = {};
+  for (let c = S.intCol; c <= S.remaining; c++) money[c] = USD;
+  bodyBlock(ws, S.opening, S.last, 1, S.flagCol + nd - 1, money);
+  for (let r = S.opening; r <= S.last; r++) {
+    ws.getCell(r, 1).alignment = { horizontal: 'center' };
+    ws.getCell(r, 2).numFmt = DATE;
+    ws.getCell(r, S.pool).numFmt = USD;
+    for (let d = 0; d < nd; d++) {
+      const f = ws.getCell(r, S.flagCol + d);
+      f.font = { name: BODY_FONT, size: 8, color: { argb: MUTED } };
+      f.alignment = { horizontal: 'center' };
+    }
+    ws.getCell(r, S.pool).font = { name: BODY_FONT, size: 9, color: { argb: MUTED } };
+  }
+
+  // The month a debt clears reads green; months after payoff fade out.
+  ws.addConditionalFormatting({
+    ref: `${bM}${S.first}:${bQ}${S.last}`,
+    rules: [{
+      type: 'cellIs', operator: 'equal', formulae: ['0'], priority: 1,
+      style: { font: { color: { argb: MINT_PALE } } },
+    }],
+  });
+  ws.addConditionalFormatting({
+    ref: `${L(S.remaining)}${S.first}:${L(S.remaining)}${S.last}`,
+    rules: [{
+      type: 'cellIs', operator: 'equal', formulae: ['0'], priority: 1,
+      style: { font: { color: { argb: GREEN_DK }, bold: true } },
+    }],
+  });
+
+  return ws;
+}
+
+async function debtPayoff() {
+  setTheme('modern');
+  const wb = new ExcelJS.Workbook();
+  const nd = DEBTS.length;
+
+  readMe(wb,
+    'Two ways to clear the same debts. Snowball pays the smallest balance first, avalanche the highest interest rate first, and the comparison sheet shows what each one costs you in interest and how long it takes.',
+    [
+      '#Filling it in',
+      'Put your debts on the Debts sheet — balance, rate and the minimum payment your lender requires. Then set the extra amount you can afford each month and the date of your first payment. Everything else is calculated.',
+      '#What the two methods do',
+      'Both pay every minimum every month, then throw all spare money at one debt until it clears. Snowball picks the smallest balance, so debts disappear quickly and it feels like progress. Avalanche picks the highest rate, which always costs less in total interest. The comparison sheet puts numbers on that trade.',
+      '#Rolling payments',
+      'When a debt clears, its minimum is not spare cash — it joins the extra payment and attacks the next debt. That is what makes either method finish years earlier than paying minimums alone, and it is why the pool column grows as you go down.',
+      '#Two simplifications, stated plainly',
+      'Minimum payments are treated as fixed, where a real credit card recalculates its minimum as the balance falls. And in the month a debt clears, any leftover from the extra payment waits until the next month rather than moving to the next debt immediately. Both make the schedule slightly cautious, never optimistic.',
+      '#The check on the Debts sheet',
+      'If a minimum payment is smaller than that month’s interest, the balance grows no matter what you pay and the debt never clears. The check names that before you build a plan on it.',
+      '#The working columns',
+      'The pool and the small t1 to t5 flags on the right of each schedule are the calculation showing itself: the pool is the spare money available that month, and the flag marks which debt is receiving it. Leave them alone, but look at them if you want to see how the roll works.',
+    ]);
+
+  // ---------------- Debts ----------------
+  const ws = wb.addWorksheet('Debts', { properties: { tabColor: { argb: GREEN } } });
+  setup(ws, { widths: [26, 15, 11, 16, 15, 15], freeze: [0, D.head] });
+  titleBlock(ws, 1, 'Debt Payoff Calculator', 'Your debts, and what you can put against them', 6);
+
+  headerRow(ws, D.head, ['Debt', 'Balance', 'Rate', 'Minimum payment',
+                         'Snowball order', 'Avalanche order']);
+  DEBTS.forEach(([name, bal, apr, min], i) => {
+    const r = D.first + i;
+    ws.getCell(r, 1).value = name;
+    ws.getCell(r, 2).value = bal;
+    ws.getCell(r, 3).value = apr;
+    ws.getCell(r, 4).value = min;
+    // Rank without ties: count the ones ahead, then the equal ones already seen.
+    ws.getCell(r, 5).value = {
+      formula: `COUNTIF($B$${D.first}:$B$${D.last},"<"&B${r})+COUNTIF($B$${D.first}:B${r},B${r})`,
+    };
+    ws.getCell(r, 6).value = {
+      formula: `COUNTIF($C$${D.first}:$C$${D.last},">"&C${r})+COUNTIF($C$${D.first}:C${r},C${r})`,
+    };
+  });
+  bodyBlock(ws, D.first, D.last, 1, 6, { 2: USD, 3: '0.00%', 4: USD });
+  for (let i = 0; i < nd; i++) {
+    [1, 2, 3, 4].forEach((c) => markInput(ws, D.first + i, c));
+    ws.getCell(D.first + i, 3).numFmt = '0.00%';
+    ws.getCell(D.first + i, 2).numFmt = USD;
+    ws.getCell(D.first + i, 4).numFmt = USD;
+    [5, 6].forEach((c) => {
+      ws.getCell(D.first + i, c).alignment = { horizontal: 'center' };
+      ws.getCell(D.first + i, c).font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+    });
+  }
+
+  ws.getCell(D.totals, 1).value = 'Total';
+  ws.getCell(D.totals, 2).value = { formula: `SUM(B${D.first}:B${D.last})` };
+  ws.getCell(D.totals, 4).value = { formula: `SUM(D${D.first}:D${D.last})` };
+  totalRow(ws, D.totals, 1, 6, { 2: USD, 4: USD });
+
+  sectionHeading(ws, D.planHead, 1, 'What you can pay');
+  const plan = [
+    ['Extra each month, on top of the minimums', EXTRA_PAYMENT, USD, true],
+    ['First payment date', START_SERIAL, DATE, true],
+    ['Total going out each month', { formula: `D${D.totals}+B${D.extra}` }, USD, false],
+  ];
+  plan.forEach(([label, value, fmt, isInput], i) => {
+    const r = D.planHead + 1 + i;
+    ws.getCell(r, 1).value = label;
+    ws.getCell(r, 1).font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+    const cell = ws.getCell(r, 2);
+    cell.value = value;
+    cell.numFmt = fmt;
+    cell.border = box;
+    if (isInput) {
+      cell.fill = fill(CREAM);
+      cell.font = { name: BODY_FONT, size: 10, bold: true, color: { argb: INPUT } };
+    } else {
+      cell.fill = fill(MINT);
+      cell.font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    }
+  });
+
+  sectionHeading(ws, D.checkHead, 1, 'Check');
+  ws.getCell(D.check, 1).value = 'Does every minimum cover its interest?';
+  ws.getCell(D.check, 1).font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+  const chk = ws.getCell(D.check, 2);
+  chk.value = {
+    formula: `IF(SUMPRODUCT(($D$${D.first}:$D$${D.last}<=$B$${D.first}:$B$${D.last}*$C$${D.first}:$C$${D.last}/12)*($B$${D.first}:$B$${D.last}>0))=0,"Yes — every debt will clear","No — one minimum is below its monthly interest")`,
+  };
+  chk.font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  chk.fill = fill(MINT);
+  chk.border = box;
+  chk.alignment = { horizontal: 'center' };
+
+  // ---------------- Schedules ----------------
+  methodSheet(wb, 'Snowball', 'E', GREEN);
+  methodSheet(wb, 'Avalanche', 'F', GREEN_DK);
+
+  // ---------------- Comparison ----------------
+  const cmp = wb.addWorksheet('Comparison', { properties: { tabColor: { argb: MINT_PALE } } });
+  setup(cmp, { widths: [30, 18, 18, 18, 18] });
+  titleBlock(cmp, 1, 'Snowball or Avalanche', 'The same debts, two orders, two totals', 5);
+
+  headerRow(cmp, 4, ['Method', 'Months to clear', 'Debt free', 'Interest paid', 'Total paid']);
+  const rowFor = (label, sheet, r) => {
+    cmp.getCell(r, 1).value = label;
+    const months = `COUNTIF(${sheet}!$${L(S.totalPay)}$${S.first}:$${L(S.totalPay)}$${S.last},">0")`;
+    cmp.getCell(r, 2).value = { formula: months };
+    cmp.getCell(r, 3).value = {
+      formula: `INDEX(${sheet}!$B$${S.first}:$B$${S.last},${months})`,
+    };
+    cmp.getCell(r, 4).value = {
+      formula: `SUM(${sheet}!$${L(S.totalInt)}$${S.first}:$${L(S.totalInt)}$${S.last})`,
+    };
+    cmp.getCell(r, 5).value = {
+      formula: `SUM(${sheet}!$${L(S.totalPay)}$${S.first}:$${L(S.totalPay)}$${S.last})`,
+    };
+  };
+  rowFor('Snowball — smallest balance first', 'Snowball', 5);
+  rowFor('Avalanche — highest rate first', 'Avalanche', 6);
+  bodyBlock(cmp, 5, 6, 1, 5, { 3: DATE, 4: USD, 5: USD });
+  for (const r of [5, 6]) {
+    cmp.getCell(r, 2).alignment = { horizontal: 'center' };
+    cmp.getCell(r, 3).numFmt = DATE;
+  }
+
+  cmp.getCell(7, 1).value = 'Avalanche saves';
+  cmp.getCell(7, 2).value = { formula: 'B5-B6' };
+  cmp.getCell(7, 4).value = { formula: 'D5-D6' };
+  cmp.getCell(7, 5).value = { formula: 'E5-E6' };
+  totalRow(cmp, 7, 1, 5, { 4: USD, 5: USD });
+  cmp.getCell(7, 2).alignment = { horizontal: 'center' };
+  cmp.getCell(7, 3).value = 'months / dollars';
+  cmp.getCell(7, 3).font = { name: BODY_FONT, size: 9, italic: true, color: { argb: WHITE } };
+  cmp.getCell(7, 3).alignment = { horizontal: 'center' };
+
+  sectionHeading(cmp, 9, 1, 'Which to choose');
+  const note = cmp.getCell(10, 1);
+  note.value =
+    'Avalanche always wins on arithmetic — it is the definition of paying the most expensive money back first. Snowball wins on the thing arithmetic does not measure, which is whether you keep going. If the gap in interest is small, take the one you will actually finish.';
+  note.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+  note.alignment = { wrapText: true, vertical: 'top' };
+  cmp.getRow(10).height = 46;
+
+  await save(wb, 'debt-payoff-calculator.xlsx');
+  setTheme('house');
+}
+
+// ---------------------------------------------------------------
 
 async function main() {
   if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
@@ -1268,12 +1665,14 @@ async function main() {
   await projectTracker();
   await attendance();
   await personalBudgetPlanner();
+  await debtPayoff();
   console.log("Done.");
 }
 
 // Exported so the verification script can compute expected values from the same
 // source arrays, rather than from the formulas it is supposed to be checking.
-module.exports = { MONTHS, INCOME_LINES, EXPENSE_LINES, CATEGORIES, P };
+module.exports = { MONTHS, INCOME_LINES, EXPENSE_LINES, CATEGORIES, P,
+                    DEBTS, EXTRA_PAYMENT, START_SERIAL, HORIZON, D, S };
 
 if (require.main === module) {
   main().catch((e) => {

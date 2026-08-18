@@ -11,6 +11,7 @@
     "build:templates": "node scripts/build-templates.js",
     "verify:templates": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/verify-templates.ps1",
     "verify:budget": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/verify-budget.ps1",
+    "verify:debt": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/verify-debt.ps1",
     "fix:gridlines": "powershell -ExecutionPolicy Bypass -NoProfile -File scripts/remove-gridlines.ps1",
     "cf:build": "opennextjs-cloudflare build",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

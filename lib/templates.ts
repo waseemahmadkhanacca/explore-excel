@@ -17,6 +17,18 @@ export interface Template {
  */
 export const TEMPLATES: Template[] = [
   {
+    slug: 'debt-payoff-calculator',
+    title: 'Debt payoff calculator',
+    summary: 'Snowball against avalanche, with the interest each one costs',
+    description:
+      'Enter up to five debts with balance, rate and minimum payment, then the extra you can afford each month. Two full schedules build themselves — snowball paying the smallest balance first, avalanche the highest rate first — and the comparison shows months to clear, the debt-free date and the interest each method costs. Cleared minimums roll into the next debt automatically, which is what makes either method finish years early.',
+    category: 'Personal finance',
+    difficulty: 'Intermediate',
+    sheets: 5,
+    formulas: ['SUMPRODUCT', 'COUNTIF', 'EOMONTH', 'ROUND'],
+    file: '/downloads/debt-payoff-calculator.xlsx',
+  },
+  {
     slug: 'personal-budget-planner',
     title: 'Personal budget planner',
     summary: 'A full year of income against spending, month by month',
