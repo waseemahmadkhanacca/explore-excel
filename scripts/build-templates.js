@@ -52,12 +52,20 @@ const LINE = 'FFE4E4E0'; // borders
  */
 const INPUT = 'FF0000FF';
 
+// The originals are Arial 10 throughout. Nothing uses Calibri.
 const HEAD_FONT = 'Arial';
-const BODY_FONT = 'Calibri';
+const BODY_FONT = 'Arial';
 
-const USD = '"$"#,##0.00';
-const DATE = 'mmm d, yyyy';
-const PCT = '0%';
+/**
+ * Accounting formats, taken from the original workbooks rather than invented.
+ * Negatives in parentheses and a dash for zero is what a finance reader
+ * expects, and it keeps a column of figures aligned on the decimal point where
+ * a currency symbol in each cell does not.
+ */
+const USD = '#,##0;(#,##0);-'; // whole dollars, the default here
+const USD2 = '#,##0.00;(#,##0.00);"-"'; // where cents matter
+const DATE = 'dd-mmm-yy';
+const PCT = '0.0%;(0.0%);-';
 
 const thin = { style: 'thin', color: { argb: LINE } };
 const box = { top: thin, left: thin, bottom: thin, right: thin };
@@ -97,25 +105,44 @@ function setup(ws, { widths, freeze = [0, 0], landscape = false }) {
   ws.headerFooter = { oddFooter: '&L&9Explore Excel&R&9Page &P of &N' };
 }
 
-/** Title centered across columns without merging a single cell. */
+/**
+ * The green banner every original sheet opens with: white 16pt title on row 1,
+ * a pale-green byline on row 2, both running the full width of the sheet.
+ *
+ * The originals merge those rows. This fills each cell and lets the text
+ * overflow instead, which looks identical and keeps the no-merged-cells rule
+ * intact — merging a header is harmless, but the rule is easier to hold to
+ * without exceptions.
+ */
 function titleBlock(ws, row, text, subtitle, lastCol) {
-  const t = ws.getCell(row, 1);
-  t.value = text;
-  t.font = { name: HEAD_FONT, size: 15, bold: true, color: { argb: GREEN_DK } };
   for (let c = 1; c <= lastCol; c++) {
-    ws.getCell(row, c).alignment = { horizontal: 'centerContinuous', vertical: 'middle' };
+    const cell = ws.getCell(row, c);
+    cell.fill = fill(GREEN);
+    cell.font = { name: HEAD_FONT, size: 16, bold: true, color: { argb: WHITE } };
+    cell.alignment = { vertical: 'middle' };
   }
-  ws.getRow(row).height = 26;
+  ws.getCell(row, 1).value = text;
+  ws.getRow(row).height = 25.5;
 
-  if (subtitle) {
-    const s = ws.getCell(row + 1, 1);
-    s.value = subtitle;
-    s.font = { name: BODY_FONT, size: 10, italic: true, color: { argb: MUTED } };
-    for (let c = 1; c <= lastCol; c++) {
-      ws.getCell(row + 1, c).alignment = { horizontal: 'centerContinuous' };
-    }
-    ws.getRow(row + 1).height = 16;
+  const byline = subtitle
+    ? `Explore Excel  ·  exploreexcel.com  ·  ${subtitle}`
+    : 'Explore Excel  ·  exploreexcel.com';
+  for (let c = 1; c <= lastCol; c++) {
+    const cell = ws.getCell(row + 1, c);
+    cell.fill = fill(GREEN);
+    cell.font = { name: BODY_FONT, size: 9, color: { argb: MINT_PALE } };
   }
+  ws.getCell(row + 1, 1).value = byline;
+  ws.getRow(row + 1).height = 15;
+}
+
+/** A bold dark-green run-in heading, as used on the Read me and summaries. */
+function sectionHeading(ws, row, col, text) {
+  const c = ws.getCell(row, col);
+  c.value = text;
+  c.font = { name: HEAD_FONT, size: 11, bold: true, color: { argb: GREEN_DK } };
+  ws.getRow(row).height = 15;
+  return c;
 }
 
 function headerRow(ws, row, labels, startCol = 1) {
@@ -127,7 +154,7 @@ function headerRow(ws, row, labels, startCol = 1) {
     cell.border = box;
     cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
   });
-  ws.getRow(row).height = 26;
+  ws.getRow(row).height = 24;
 }
 
 function bodyBlock(ws, firstRow, lastRow, firstCol, lastCol, formats = {}) {
@@ -179,34 +206,49 @@ function caption(ws, row, col, text) {
   return c;
 }
 
+/**
+ * The Read me sheet, laid out the way the originals do it: three columns at
+ * 40/30/30, the banner on rows 1 and 2, then heading and body alternating with
+ * a blank row between each pair. Headings are prefixed with # by the caller.
+ */
 function readMe(wb, title, lines) {
   const ws = wb.addWorksheet('Read me', { properties: { tabColor: { argb: MUTED } } });
-  setup(ws, { widths: [3, 94] });
-  titleBlock(ws, 2, title, 'How to use this template', 2);
+  setup(ws, { widths: [40, 30, 30] });
+  titleBlock(ws, 1, 'How this workbook works', null, 3);
 
-  let r = 5;
-  for (const line of lines) {
-    const cell = ws.getCell(r, 2);
-    const isHeading = line.startsWith('#');
-    cell.value = isHeading ? line.slice(1).trim() : line;
-    if (isHeading) {
-      cell.font = { name: HEAD_FONT, size: 11, bold: true, color: { argb: GREEN_DK } };
-      ws.getRow(r).height = 22;
+  let r = 4;
+  sectionHeading(ws, r, 1, 'What this is');
+  r++;
+  ws.getCell(r, 1).value = title;
+  ws.getCell(r, 1).font = body();
+  ws.getCell(r, 1).alignment = { wrapText: true, vertical: 'top' };
+  ws.getRow(r).height = 33.75;
+  r += 2;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+    if (line.startsWith('#')) {
+      sectionHeading(ws, r, 1, line.slice(1).trim());
+      r++;
     } else {
+      const cell = ws.getCell(r, 1);
+      cell.value = line;
       cell.font = body();
       cell.alignment = { wrapText: true, vertical: 'top' };
-      ws.getRow(r).height = line.length > 92 ? 30 : 16;
+      ws.getRow(r).height = line.length > 150 ? 48 : 33.75;
+      r += 2;
     }
-    r++;
   }
 
-  const key = ws.getCell(r + 1, 2);
-  key.value = 'Blue text on a cream background marks a cell you fill in. Black text is calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modeling convention.';
-  key.font = { name: BODY_FONT, size: 9, italic: true, color: { argb: MUTED } };
+  sectionHeading(ws, r, 1, 'Reading the colors');
+  r++;
+  const key = ws.getCell(r, 1);
+  key.value =
+    'Blue figures are yours to type over. Black figures are calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modeling convention, so anyone in a finance or audit role will read it without being told.';
+  key.font = body();
   key.alignment = { wrapText: true, vertical: 'top' };
-  key.fill = fill(MINT);
-  key.border = box;
-  ws.getRow(r + 1).height = 30;
+  ws.getRow(r).height = 48;
   return ws;
 }
 
@@ -927,6 +969,296 @@ async function attendance() {
 }
 
 // ---------------------------------------------------------------
+// 5. Personal budget planner
+// ---------------------------------------------------------------
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Twelve monthly figures from a base, with named months overridden. */
+const year = (base, overrides = {}) =>
+  MONTHS.map((m) => (m in overrides ? overrides[m] : base));
+
+const INCOME_LINES = [
+  ['Take-home pay', year(4200)],
+  ['Second income', year(1150)],
+  ['Other income', year(0, { Jun: 300, Dec: 250 })],
+];
+
+const EXPENSE_LINES = [
+  // Utilities swing with the seasons, which is the point of a 12-month view.
+  ['Rent or mortgage', 'Housing', year(1450)],
+  ['Utilities', 'Housing', year(180, { Jan: 265, Feb: 250, Jul: 230, Aug: 235, Dec: 240 })],
+  ['Home insurance', 'Housing', year(95)],
+  ['Repairs and maintenance', 'Housing', year(60, { Apr: 400, Sep: 220 })],
+  ['Groceries', 'Food', year(620, { Nov: 700, Dec: 760 })],
+  ['Eating out', 'Food', year(180, { Dec: 260 })],
+  ['Car payment', 'Transport', year(340)],
+  ['Fuel', 'Transport', year(145, { Jul: 190, Aug: 185 })],
+  ['Auto insurance', 'Transport', year(120)],
+  ['Credit card payment', 'Debt', year(250)],
+  ['Student loan', 'Debt', year(310)],
+  ['Emergency fund', 'Savings', year(300)],
+  ['Retirement', 'Savings', year(450)],
+  ['Subscriptions', 'Discretionary', year(55)],
+  ['Entertainment', 'Discretionary', year(140, { Jul: 320 })],
+  ['Clothing', 'Discretionary', year(90, { Sep: 240 })],
+  ['Gifts and giving', 'Discretionary', year(75, { Dec: 480 })],
+];
+
+const CATEGORIES = ['Housing', 'Food', 'Transport', 'Debt', 'Savings', 'Discretionary'];
+
+// Row map for the Planner sheet. Kept here so the Summary formulas and the
+// verification script both reference one definition rather than magic numbers.
+const P = {
+  head: 4,
+  incomeBand: 5,
+  incomeFirst: 6,
+  incomeLast: 5 + INCOME_LINES.length,
+  get incomeTotal() { return this.incomeLast + 1; },
+  get expenseBand() { return this.incomeTotal + 2; },
+  get expenseFirst() { return this.expenseBand + 1; },
+  get expenseLast() { return this.expenseFirst + EXPENSE_LINES.length - 1; },
+  get expenseTotal() { return this.expenseLast + 1; },
+  get surplus() { return this.expenseTotal + 2; },
+  get running() { return this.surplus + 1; },
+  firstMonthCol: 3, // C
+  get lastMonthCol() { return this.firstMonthCol + 11; }, // N
+  get yearCol() { return this.lastMonthCol + 1; }, // O
+};
+
+function bandRow(ws, row, label, lastCol) {
+  for (let c = 1; c <= lastCol; c++) {
+    const cell = ws.getCell(row, c);
+    cell.fill = fill(MINT);
+    cell.font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    cell.border = box;
+  }
+  ws.getCell(row, 1).value = label;
+  ws.getRow(row).height = 18;
+}
+
+async function personalBudgetPlanner() {
+  const wb = new ExcelJS.Workbook();
+  const LAST = P.yearCol;
+  const colLetter = (n) => {
+    let s = '';
+    while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = (n - m - 1) / 26; }
+    return s;
+  };
+  const C = colLetter(P.firstMonthCol);
+  const N = colLetter(P.lastMonthCol);
+  const O = colLetter(P.yearCol);
+
+  readMe(wb,
+    'A twelve-month personal budget. Income and spending by category for every month of the year, with the surplus or deficit each month and the running balance that follows from it.',
+    [
+      '#Filling it in',
+      'Type over the blue figures on the Planner sheet. Every line runs across twelve months, so a cost that changes with the season — utilities, gifts in December — can be entered month by month rather than averaged into something that is wrong all year.',
+      '#The two rows that matter',
+      'Surplus or deficit is that month on its own: income less everything you spent. Running balance carries it forward, so it answers the question the monthly figure cannot — whether a good January is still covering you by June.',
+      '#The Summary sheet',
+      'Pick any month in the blue cell and the whole sheet re-reads for that month. It finds the column with MATCH and pulls the figures with INDEX, which is why it works in every version of Excel rather than only the recent ones.',
+      '#Savings is an expense here',
+      'Money moved to an emergency fund or a retirement account sits in the expense block deliberately. Treating it as something left over at the end is how it stops happening; treating it as a bill you pay yourself is how it does not.',
+      '#The check at the foot of the Summary',
+      'It adds the six category totals and compares them against the planner. It should always say Agrees. If it does not, a line has been given a category that is not one of the six.',
+    ]);
+
+  // ---------------- Planner ----------------
+  const ws = wb.addWorksheet('Planner', { properties: { tabColor: { argb: GREEN } } });
+  setup(ws, {
+    widths: [30, 15].concat(Array(12).fill(10)).concat([12]),
+    freeze: [2, P.head],
+    landscape: true,
+  });
+
+  titleBlock(ws, 1, 'Personal Budget Planner', 'Twelve months, income against spending', LAST);
+  headerRow(ws, P.head, ['Line', 'Category', ...MONTHS, 'Year']);
+
+  bandRow(ws, P.incomeBand, 'INCOME', LAST);
+  INCOME_LINES.forEach(([label, values], i) => {
+    const r = P.incomeFirst + i;
+    ws.getCell(r, 1).value = label;
+    ws.getCell(r, 2).value = 'Income';
+    values.forEach((v, m) => { ws.getCell(r, P.firstMonthCol + m).value = v; });
+    ws.getCell(r, P.yearCol).value = { formula: `SUM(${C}${r}:${N}${r})` };
+  });
+
+  bandRow(ws, P.expenseBand, 'EXPENSES', LAST);
+  EXPENSE_LINES.forEach(([label, cat, values], i) => {
+    const r = P.expenseFirst + i;
+    ws.getCell(r, 1).value = label;
+    ws.getCell(r, 2).value = cat;
+    values.forEach((v, m) => { ws.getCell(r, P.firstMonthCol + m).value = v; });
+    ws.getCell(r, P.yearCol).value = { formula: `SUM(${C}${r}:${N}${r})` };
+  });
+
+  // Body styling, then the input columns marked blue over the top.
+  bodyBlock(ws, P.incomeFirst, P.incomeLast, 1, LAST,
+    Object.fromEntries(Array.from({ length: 13 }, (_, i) => [P.firstMonthCol + i, USD])));
+  bodyBlock(ws, P.expenseFirst, P.expenseLast, 1, LAST,
+    Object.fromEntries(Array.from({ length: 13 }, (_, i) => [P.firstMonthCol + i, USD])));
+  for (const [first, last] of [[P.incomeFirst, P.incomeLast], [P.expenseFirst, P.expenseLast]]) {
+    for (let r = first; r <= last; r++) {
+      for (let c = P.firstMonthCol; c <= P.lastMonthCol; c++) {
+        const cell = ws.getCell(r, c);
+        cell.font = { name: BODY_FONT, size: 10, color: { argb: INPUT } };
+        cell.numFmt = USD;
+      }
+      ws.getCell(r, P.yearCol).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: INK } };
+    }
+  }
+
+  // Totals.
+  const totalLine = (row, label, perMonth) => {
+    ws.getCell(row, 1).value = label;
+    for (let c = P.firstMonthCol; c <= P.lastMonthCol; c++) {
+      ws.getCell(row, c).value = { formula: perMonth(colLetter(c)) };
+    }
+    ws.getCell(row, P.yearCol).value = { formula: `SUM(${C}${row}:${N}${row})` };
+    totalRow(ws, row, 1, LAST,
+      Object.fromEntries(Array.from({ length: 13 }, (_, i) => [P.firstMonthCol + i, USD])));
+  };
+
+  totalLine(P.incomeTotal, 'Total income',
+    (L) => `SUM(${L}${P.incomeFirst}:${L}${P.incomeLast})`);
+  totalLine(P.expenseTotal, 'Total spending',
+    (L) => `SUM(${L}${P.expenseFirst}:${L}${P.expenseLast})`);
+  totalLine(P.surplus, 'Surplus / (deficit)',
+    (L) => `${L}${P.incomeTotal}-${L}${P.expenseTotal}`);
+
+  // Running balance: this month's surplus added to last month's position. The
+  // year column shows where December leaves you, not a sum of the row.
+  ws.getCell(P.running, 1).value = 'Running balance';
+  for (let c = P.firstMonthCol; c <= P.lastMonthCol; c++) {
+    const L = colLetter(c);
+    ws.getCell(P.running, c).value = {
+      formula: c === P.firstMonthCol
+        ? `${L}${P.surplus}`
+        : `${colLetter(c - 1)}${P.running}+${L}${P.surplus}`,
+    };
+  }
+  ws.getCell(P.running, P.yearCol).value = { formula: `${N}${P.running}` };
+  for (let c = 1; c <= LAST; c++) {
+    const cell = ws.getCell(P.running, c);
+    cell.font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    cell.fill = fill(MINT);
+    cell.border = box;
+    if (c >= P.firstMonthCol) cell.numFmt = USD;
+  }
+  ws.getRow(P.running).height = 18;
+
+  // A month in deficit reads red wherever it appears.
+  for (const row of [P.surplus, P.running]) {
+    ws.addConditionalFormatting({
+      ref: `${C}${row}:${O}${row}`,
+      rules: [{
+        type: 'cellIs', operator: 'lessThan', formulae: ['0'], priority: 1,
+        style: { font: { color: { argb: RED }, bold: true } },
+      }],
+    });
+  }
+
+  // ---------------- Summary ----------------
+  const sm = wb.addWorksheet('Summary', { properties: { tabColor: { argb: GREEN_DK } } });
+  setup(sm, { widths: [30, 16, 16, 16] });
+  titleBlock(sm, 1, 'Summary', 'One month in focus, and the year behind it', 4);
+
+  sm.getCell(4, 1).value = 'Month in focus';
+  sm.getCell(4, 1).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: INK } };
+  const pick = inputCell(sm, 4, 2, 'Mar');
+  pick.alignment = { horizontal: 'center' };
+  sm.dataValidations.add('B4:B4', {
+    type: 'list', allowBlank: false,
+    formulae: [`"${MONTHS.join(',')}"`],
+    showErrorMessage: true, errorStyle: 'stop',
+    errorTitle: 'Pick a month',
+    error: 'Choose one of the twelve month abbreviations, for example Mar.',
+  });
+
+  // MATCH finds the column for the chosen month; INDEX pulls from it. Passing 0
+  // as the row argument returns the whole column, which is what lets SUMPRODUCT
+  // total one category within a single month. No XLOOKUP, so this opens
+  // anywhere.
+  const monthCol = `MATCH($B$4,Planner!$${C}$${P.head}:$${N}$${P.head},0)`;
+
+  headerRow(sm, 6, ['Category', 'This month', 'Year total', 'Share of income']);
+  CATEGORIES.forEach((cat, i) => {
+    const r = 7 + i;
+    sm.getCell(r, 1).value = cat;
+    sm.getCell(r, 2).value = {
+      formula: `SUMPRODUCT((Planner!$B$${P.expenseFirst}:$B$${P.expenseLast}=$A${r})*INDEX(Planner!$${C}$${P.expenseFirst}:$${N}$${P.expenseLast},0,${monthCol}))`,
+    };
+    sm.getCell(r, 3).value = {
+      formula: `SUMIF(Planner!$B$${P.expenseFirst}:$B$${P.expenseLast},$A${r},Planner!$${O}$${P.expenseFirst}:$${O}$${P.expenseLast})`,
+    };
+    sm.getCell(r, 4).value = { formula: `IFERROR(C${r}/Planner!$${O}$${P.incomeTotal},0)` };
+  });
+  const catLast = 6 + CATEGORIES.length;
+  bodyBlock(sm, 7, catLast, 1, 4, { 2: USD, 3: USD, 4: PCT });
+
+  const totRow = catLast + 1;
+  sm.getCell(totRow, 1).value = 'Total spending';
+  sm.getCell(totRow, 2).value = { formula: `SUM(B7:B${catLast})` };
+  sm.getCell(totRow, 3).value = { formula: `SUM(C7:C${catLast})` };
+  sm.getCell(totRow, 4).value = { formula: `SUM(D7:D${catLast})` };
+  totalRow(sm, totRow, 1, 4, { 2: USD, 3: USD, 4: PCT });
+
+  const posRow = totRow + 2;
+  sectionHeading(sm, posRow, 1, 'Where the month lands');
+  const lines = [
+    ['Income', `INDEX(Planner!$${C}$${P.incomeTotal}:$${N}$${P.incomeTotal},${monthCol})`,
+      `Planner!$${O}$${P.incomeTotal}`, USD],
+    ['Spending', `INDEX(Planner!$${C}$${P.expenseTotal}:$${N}$${P.expenseTotal},${monthCol})`,
+      `Planner!$${O}$${P.expenseTotal}`, USD],
+  ];
+  lines.forEach(([label, m, y, fmt], i) => {
+    const r = posRow + 1 + i;
+    sm.getCell(r, 1).value = label;
+    sm.getCell(r, 2).value = { formula: m };
+    sm.getCell(r, 3).value = { formula: y };
+    sm.getCell(r, 2).numFmt = fmt;
+    sm.getCell(r, 3).numFmt = fmt;
+  });
+  const surRow = posRow + 3;
+  sm.getCell(surRow, 1).value = 'Surplus / (deficit)';
+  sm.getCell(surRow, 2).value = { formula: `B${posRow + 1}-B${posRow + 2}` };
+  sm.getCell(surRow, 3).value = { formula: `C${posRow + 1}-C${posRow + 2}` };
+  const rateRow = surRow + 1;
+  sm.getCell(rateRow, 1).value = 'Savings rate';
+  sm.getCell(rateRow, 2).value = { formula: `IFERROR(B${7 + CATEGORIES.indexOf('Savings')}/B${posRow + 1},0)` };
+  sm.getCell(rateRow, 3).value = { formula: `IFERROR(C${7 + CATEGORIES.indexOf('Savings')}/C${posRow + 1},0)` };
+  bodyBlock(sm, posRow + 1, rateRow, 1, 3, { 2: USD, 3: USD });
+  sm.getCell(rateRow, 2).numFmt = PCT;
+  sm.getCell(rateRow, 3).numFmt = PCT;
+  for (const c of [1, 2, 3]) {
+    sm.getCell(surRow, c).font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  }
+  sm.addConditionalFormatting({
+    ref: `B${surRow}:C${surRow}`,
+    rules: [{
+      type: 'cellIs', operator: 'lessThan', formulae: ['0'], priority: 1,
+      style: { font: { color: { argb: RED }, bold: true } },
+    }],
+  });
+
+  const chkRow = rateRow + 2;
+  sectionHeading(sm, chkRow, 1, 'Check');
+  sm.getCell(chkRow + 1, 1).value = 'Categories against the planner';
+  sm.getCell(chkRow + 1, 1).font = body();
+  sm.getCell(chkRow + 1, 2).value = {
+    formula: `IF(ROUND(C${totRow}-Planner!$${O}$${P.expenseTotal},2)=0,"Agrees","Out by "&TEXT(C${totRow}-Planner!$${O}$${P.expenseTotal},"#,##0"))`,
+  };
+  sm.getCell(chkRow + 1, 2).font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  sm.getCell(chkRow + 1, 2).alignment = { horizontal: 'center' };
+  sm.getCell(chkRow + 1, 2).fill = fill(MINT);
+  sm.getCell(chkRow + 1, 2).border = box;
+
+  await save(wb, 'personal-budget-planner.xlsx');
+}
+
+// ---------------------------------------------------------------
 
 async function main() {
   if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
@@ -935,10 +1267,17 @@ async function main() {
   await invoice();
   await projectTracker();
   await attendance();
-  console.log('Done.');
+  await personalBudgetPlanner();
+  console.log("Done.");
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Exported so the verification script can compute expected values from the same
+// source arrays, rather than from the formulas it is supposed to be checking.
+module.exports = { MONTHS, INCOME_LINES, EXPENSE_LINES, CATEGORIES, P };
+
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

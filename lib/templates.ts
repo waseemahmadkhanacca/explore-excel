@@ -17,9 +17,21 @@ export interface Template {
  */
 export const TEMPLATES: Template[] = [
   {
+    slug: 'personal-budget-planner',
+    title: 'Personal budget planner',
+    summary: 'A full year of income against spending, month by month',
+    description:
+      'Twelve months across, income and seventeen spending lines down, grouped into housing, food, transport, debt, savings and discretionary. Each month shows its own surplus or deficit, and a running balance carries it forward so a good January is visibly still covering you in June. The summary re-reads for any month you pick, using INDEX and MATCH rather than XLOOKUP so it opens in every version of Excel.',
+    category: 'Personal finance',
+    difficulty: 'Beginner',
+    sheets: 3,
+    formulas: ['INDEX', 'MATCH', 'SUMIF', 'SUMPRODUCT'],
+    file: '/downloads/personal-budget-planner.xlsx',
+  },
+  {
     slug: 'monthly-budget-planner',
-    title: 'Monthly budget planner',
-    summary: 'Budget against actual, by category, from a transaction log',
+    title: 'Monthly budget tracker',
+    summary: 'Track one month against plan, from a logged transaction list',
     description:
       'Enter what you plan to spend by category, then log transactions as they happen. Budgeted, actual, variance and percentage used fill in on their own, and a category turns amber at ninety percent and red once you pass it. Category names come from a dropdown, so a typo cannot quietly split one category into two.',
     category: 'Personal finance',
