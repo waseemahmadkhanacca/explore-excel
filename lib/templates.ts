@@ -17,6 +17,18 @@ export interface Template {
  */
 export const TEMPLATES: Template[] = [
   {
+    slug: 'purchase-order',
+    title: 'Purchase order',
+    summary: 'A sendable PO, plus a log that ages every order you have raised',
+    description:
+      'Your details and tax rate go in once, then each order needs only a PO number, a vendor and its line items — quantity times unit price, sales tax and the total all calculate, and the page prints to one sheet. The log is the half that matters: add a row as you send each order, enter what arrives against it, and Days late and Delivery status maintain themselves. It is the payables mirror of the invoice register, aging what you have committed to spend rather than what you are owed.',
+    category: 'Accounting',
+    difficulty: 'Intermediate',
+    sheets: 5,
+    formulas: ['SUMIFS', 'COUNTIFS', 'IF', 'ROUND'],
+    file: '/downloads/purchase-order.xlsx',
+  },
+  {
     slug: 'debt-payoff-calculator',
     title: 'Debt payoff calculator',
     summary: 'Snowball against avalanche, with the interest each one costs',

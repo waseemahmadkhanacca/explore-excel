@@ -1681,6 +1681,327 @@ async function debtPayoff() {
 }
 
 // ---------------------------------------------------------------
+// 7. Purchase order — the payables side of the invoice register
+// ---------------------------------------------------------------
+
+const PO_SETTINGS = [
+  ['Business name', 'Your Business Ltd'],
+  ['Address line 1', '12 Example Street'],
+  ['Address line 2', 'Columbus'],
+  ['State and ZIP', 'OH 43004'],
+  ['Email', 'purchasing@yourbusiness.com'],
+  ['Phone', '(614) 555 0100'],
+  ['Sales tax rate', 0.0875],
+  ['Standard lead time (days)', 21],
+  ['Payment terms (days)', 30],
+];
+
+const PO_LINES = [
+  ['Aluminum bracket, 3 mm', 250, 4.85],
+  ['Hex bolt M8 x 40, zinc', 1000, 0.42],
+  ['Thread lock compound, 50 ml', 24, 11.75],
+  ['Freight and handling', 1, 85],
+];
+
+/** Raised and expected dates are static inputs; ageing measures against TODAY. */
+const PO_LOG = [
+  ['PO-1041', 'Northaero Supplies', 46210, 46231, 2174.46, 2174.46],
+  ['PO-1042', 'Southend Components', 46215, 46236, 3480.0, 0],
+  ['PO-1043', 'Westmoor Fabrication', 46224, 46252, 1290.75, 0],
+  ['PO-1044', 'Northaero Supplies', 46180, 46201, 940.0, 400.0],
+  ['PO-1045', 'Delta Castings', 46232, 46266, 5600.0, 0],
+];
+
+const PO_BUCKETS = ['On schedule', '1-30 days', '31-60 days', '61-90 days', '90+ days'];
+
+const PO = {
+  setFirst: 5,
+  get setLast() { return this.setFirst + PO_SETTINGS.length - 1; },
+  get taxRow() { return this.setFirst + 6; },
+  get leadRow() { return this.setFirst + 7; },
+  get termsRow() { return this.setFirst + 8; },
+  lineHead: 13, lineFirst: 14, lineLast: 26,
+  get subtotal() { return this.lineLast + 1; },
+  logToday: 4, logHead: 6, logFirst: 7, logLast: 206,
+};
+
+async function purchaseOrder() {
+  setTheme('house');
+  USD = USD2; // purchasing is reconciled to the cent against a vendor invoice
+  const wb = new ExcelJS.Workbook();
+
+  readMe(wb,
+    'A purchase order you can send to a vendor, and a running log of every order raised. The log ages each order against the delivery date you promised yourself, the same way the invoice register ages what customers owe you — one is money coming in, this is what you have committed to spend.',
+    [
+      '#Setting it up once',
+      'Fill in the Settings sheet: your details, your sales tax rate, and how long a vendor normally takes. Those flow onto every order, and the expected delivery date calculates itself from the lead time so you are not guessing.',
+      '#Raising an order',
+      'On the Purchase Order sheet fill the blue cells — PO number, date, the vendor block, and the line items. Quantity times unit price gives the line total, tax comes from Settings, and the page is already set to print on one sheet.',
+      '#The log is the point',
+      'A purchase order on its own is paperwork. The log is what stops an order being forgotten: add a row as you send each one, put the value received against it as goods arrive, and the Days late and Delivery status columns take care of themselves.',
+      '#How ageing works here',
+      'Ageing runs from the expected delivery date against today, so it changes every time you open the file. An order is On schedule until that date passes, then moves through the 30, 60 and 90 day buckets. Once the received value matches the order value it drops out entirely and reads Received.',
+      '#Partial deliveries',
+      'Put what has actually arrived in the Received column, not the whole order value. Outstanding is the difference, and a partly delivered order stays in the ageing until the balance turns up — which is exactly when you want to be chasing it.',
+      '#The sample dates will age',
+      'The five example orders use fixed dates from when this file was built, so before long they will all read as badly overdue. Delete them and enter your own; nothing else depends on them.',
+    ]);
+
+  // ---------------- Settings ----------------
+  const st = wb.addWorksheet('Settings', { properties: { tabColor: { argb: MUTED } } });
+  setup(st, { widths: [30, 30], freeze: [0, PO.setFirst - 1] });
+  titleBlock(st, 1, 'Settings', 'Entered once, used on every order', 2);
+  headerRow(st, PO.setFirst - 1, ['Field', 'Value']);
+  PO_SETTINGS.forEach(([k, v], i) => {
+    const r = PO.setFirst + i;
+    st.getCell(r, 1).value = k;
+    st.getCell(r, 1).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    st.getCell(r, 2).value = v;
+  });
+  bodyBlock(st, PO.setFirst, PO.setLast, 1, 2);
+  for (let i = 0; i < PO_SETTINGS.length; i++) markInput(st, PO.setFirst + i, 2);
+  st.getCell(PO.taxRow, 2).numFmt = '0.00%';
+
+  const TAX = `Settings!$B$${PO.taxRow}`;
+  const LEAD = `Settings!$B$${PO.leadRow}`;
+  const TERMS = `Settings!$B$${PO.termsRow}`;
+
+  // ---------------- Purchase Order ----------------
+  const po = wb.addWorksheet('Purchase Order', { properties: { tabColor: { argb: GREEN } } });
+  setup(po, { widths: [44, 12, 15, 17] });
+  titleBlock(po, 1, 'Purchase Order', 'One order, ready to send', 4);
+
+  po.getCell(4, 1).value = { formula: `Settings!B${PO.setFirst}` };
+  po.getCell(4, 1).font = { name: HEAD_FONT, size: 13, bold: true, color: { argb: GREEN_DK } };
+  [1, 2, 3, 4, 5].forEach((n, i) => {
+    const c = po.getCell(5 + i, 1);
+    c.value = { formula: `Settings!B${PO.setFirst + n}` };
+    c.font = { name: BODY_FONT, size: 10, color: { argb: MUTED } };
+  });
+
+  const meta = [
+    ['PO number', 'PO-1046', null, true],
+    ['Date raised', 46238, DATE, true],
+    ['Expected delivery', { formula: `IF(D5="","",D5+${LEAD})` }, DATE, false],
+    ['Payment terms', { formula: `${TERMS}&" days from invoice"` }, null, false],
+  ];
+  meta.forEach(([label, v, fmt, isInput], i) => {
+    const r = 4 + i;
+    const lc = po.getCell(r, 3);
+    lc.value = label;
+    lc.font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+    lc.alignment = { horizontal: 'right' };
+    const vc = po.getCell(r, 4);
+    vc.value = v;
+    vc.alignment = { horizontal: 'right' };
+    vc.border = box;
+    if (fmt) vc.numFmt = fmt;
+    if (isInput) {
+      vc.fill = fill(CREAM);
+      vc.font = { name: BODY_FONT, size: 10, bold: true, color: { argb: INPUT } };
+    } else {
+      vc.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+    }
+  });
+
+  const blockHead = (row, col, label) => {
+    const c = po.getCell(row, col);
+    c.value = label;
+    c.font = head();
+    c.fill = fill(GREEN);
+    c.border = box;
+  };
+  blockHead(10, 1, 'Vendor');
+  blockHead(10, 3, 'Deliver to');
+  ['Vendor name', 'Address', 'City and state', 'Contact and phone'].forEach((v, i) => {
+    const c = po.getCell(11 + i, 1);
+    c.value = v;
+    c.border = box;
+    markInput(po, 11 + i, 1);
+  });
+  ['Site or warehouse', 'Address', 'City and state', 'Receiving contact'].forEach((v, i) => {
+    const c = po.getCell(11 + i, 3);
+    c.value = v;
+    c.border = box;
+    markInput(po, 11 + i, 3);
+    po.getCell(11 + i, 4).border = box;
+  });
+
+  headerRow(po, PO.lineHead, ['Description', 'Quantity', 'Unit price', 'Line total']);
+  for (let i = 0; i <= PO.lineLast - PO.lineFirst; i++) {
+    const r = PO.lineFirst + i;
+    if (PO_LINES[i]) {
+      po.getCell(r, 1).value = PO_LINES[i][0];
+      po.getCell(r, 2).value = PO_LINES[i][1];
+      po.getCell(r, 3).value = PO_LINES[i][2];
+    }
+    po.getCell(r, 4).value = { formula: `IF(B${r}="","",ROUND(B${r}*C${r},2))` };
+  }
+  bodyBlock(po, PO.lineFirst, PO.lineLast, 1, 4, { 2: '#,##0;(#,##0);-', 3: USD2, 4: USD2 });
+  for (let r = PO.lineFirst; r <= PO.lineLast; r++) {
+    [1, 2, 3].forEach((c) => markInput(po, r, c));
+    po.getCell(r, 2).numFmt = '#,##0;(#,##0);-';
+    po.getCell(r, 3).numFmt = USD2;
+    po.getCell(r, 4).font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+  }
+
+  const SUB = PO.subtotal;
+  [
+    ['Subtotal', { formula: `SUM(D${PO.lineFirst}:D${PO.lineLast})` }],
+    ['Sales tax', { formula: `ROUND(D${SUB}*${TAX},2)` }],
+    ['Order total', { formula: `D${SUB}+D${SUB + 1}` }],
+  ].forEach(([label, v], i) => {
+    const r = SUB + i;
+    const lc = po.getCell(r, 3);
+    lc.value = label;
+    lc.alignment = { horizontal: 'right' };
+    lc.border = box;
+    const vc = po.getCell(r, 4);
+    vc.value = v;
+    vc.numFmt = USD2;
+    vc.border = box;
+    if (i === 2) {
+      lc.font = head();
+      lc.fill = fill(GREEN);
+      vc.font = head({ size: 11 });
+      vc.fill = fill(GREEN);
+    } else {
+      lc.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+      vc.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
+    }
+  });
+
+  sectionHeading(po, SUB + 4, 1, 'Terms');
+  prose(po, SUB + 5, 1,
+    'Deliver to the address above on or before the expected delivery date. Quote the PO number on the packing slip and the invoice; an invoice without it may be returned. Partial deliveries are accepted and should be noted on the packing slip.',
+    44);
+  po.getCell(SUB + 7, 1).value = 'Authorized by';
+  po.getCell(SUB + 7, 1).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  po.getCell(SUB + 7, 2).border = { bottom: thin };
+  po.getCell(SUB + 7, 3).value = 'Date';
+  po.getCell(SUB + 7, 3).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  po.getCell(SUB + 7, 3).alignment = { horizontal: 'right' };
+  po.getCell(SUB + 7, 4).border = { bottom: thin };
+
+  // ---------------- PO Log ----------------
+  const lg = wb.addWorksheet('PO Log', { properties: { tabColor: { argb: GREEN_DK } } });
+  setup(lg, { widths: [12, 22, 11, 11, 13, 12, 13, 11, 15, 2, 14], freeze: [2, PO.logHead] });
+  titleBlock(lg, 1, 'Purchase Order Log', 'Ageing runs from the expected delivery date', 11);
+
+  lg.getCell(PO.logToday, 1).value = "Today's date";
+  lg.getCell(PO.logToday, 1).font = { name: BODY_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  const today = lg.getCell(PO.logToday, 3);
+  today.value = { formula: 'TODAY()' };
+  today.numFmt = DATE;
+  today.font = { name: BODY_FONT, size: 10, bold: true, color: { argb: INK } };
+  today.fill = fill(MINT);
+  today.border = box;
+  lg.getCell(PO.logToday, 4).value = 'Ageing is measured against this. It updates every time you open the file.';
+  lg.getCell(PO.logToday, 4).font = { name: BODY_FONT, size: 9, italic: true, color: { argb: MUTED } };
+
+  headerRow(lg, PO.logHead, ['PO no.', 'Vendor', 'Raised', 'Expected', 'Order value',
+                             'Received', 'Outstanding', 'Days late', 'Delivery status', '', 'Action']);
+  const T = `$C$${PO.logToday}`;
+  for (let r = PO.logFirst; r <= PO.logLast; r++) {
+    const i = r - PO.logFirst;
+    if (PO_LOG[i]) PO_LOG[i].forEach((v, c) => { lg.getCell(r, c + 1).value = v; });
+    lg.getCell(r, 7).value = { formula: `IF(E${r}="","",E${r}-N(F${r}))` };
+    lg.getCell(r, 8).value = { formula: `IF(OR(D${r}="",G${r}=""),"",IF(G${r}<=0,0,MAX(0,${T}-D${r})))` };
+    lg.getCell(r, 9).value = {
+      formula: `IF(H${r}="","",IF(G${r}<=0,"Received",IF(H${r}=0,"On schedule",IF(H${r}<=30,"1-30 days",IF(H${r}<=60,"31-60 days",IF(H${r}<=90,"61-90 days","90+ days"))))))`,
+    };
+    lg.getCell(r, 11).value = {
+      formula: `IF(A${r}="","",IF(G${r}<=0,"Complete",IF(H${r}>0,"Chase vendor",IF(D${r}-${T}<=7,"Due soon","Open"))))`,
+    };
+  }
+  bodyBlock(lg, PO.logFirst, PO.logLast, 1, 11,
+    { 3: DATE, 4: DATE, 5: USD2, 6: USD2, 7: USD2, 8: '#,##0;(#,##0);-' });
+  for (let r = PO.logFirst; r <= PO.logLast; r++) {
+    [1, 2, 3, 4, 5, 6].forEach((c) => markInput(lg, r, c));
+    lg.getCell(r, 3).numFmt = DATE;
+    lg.getCell(r, 4).numFmt = DATE;
+    [5, 6].forEach((c) => { lg.getCell(r, c).numFmt = USD2; });
+    [8, 9, 11].forEach((c) => { lg.getCell(r, c).alignment = { horizontal: 'center' }; });
+    lg.getCell(r, 10).border = undefined;
+  }
+  lg.autoFilter = { from: { row: PO.logHead, column: 1 }, to: { row: PO.logHead, column: 9 } };
+
+  lg.addConditionalFormatting({
+    ref: `K${PO.logFirst}:K${PO.logLast}`,
+    rules: [
+      { type: 'cellIs', operator: 'equal', formulae: ['"Chase vendor"'], priority: 1,
+        style: { fill: cfFill('FFF6DEDE'), font: { color: { argb: RED }, bold: true } } },
+      { type: 'cellIs', operator: 'equal', formulae: ['"Complete"'], priority: 2,
+        style: { font: { color: { argb: GREEN_DK }, bold: true } } },
+    ],
+  });
+
+  // ---------------- Summary ----------------
+  const sm = wb.addWorksheet('Summary', { properties: { tabColor: { argb: MINT_PALE } } });
+  setup(sm, { widths: [26, 14, 16, 14, 44] });
+  titleBlock(sm, 1, 'Commitments Summary', 'All figures pull from the PO Log', 5);
+
+  sectionHeading(sm, 4, 1, 'Ageing profile');
+  headerRow(sm, 5, ['Bucket', 'Orders', 'Outstanding', '% of total']);
+  PO_BUCKETS.forEach((b, i) => {
+    const r = 6 + i;
+    sm.getCell(r, 1).value = b;
+    sm.getCell(r, 2).value = { formula: `COUNTIFS('PO Log'!$I$${PO.logFirst}:$I$${PO.logLast},A${r})` };
+    sm.getCell(r, 3).value = {
+      formula: `SUMIFS('PO Log'!$G$${PO.logFirst}:$G$${PO.logLast},'PO Log'!$I$${PO.logFirst}:$I$${PO.logLast},A${r})`,
+    };
+    sm.getCell(r, 4).value = { formula: `IFERROR(C${r}/$C$11,0)` };
+  });
+  bodyBlock(sm, 6, 10, 1, 4, { 3: USD2, 4: PCT });
+  sm.getCell(11, 1).value = 'Total outstanding';
+  sm.getCell(11, 2).value = { formula: 'SUM(B6:B10)' };
+  sm.getCell(11, 3).value = { formula: 'SUM(C6:C10)' };
+  sm.getCell(11, 4).value = { formula: 'IFERROR(C11/$C$11,0)' };
+  totalRow(sm, 11, 1, 4, { 3: USD2, 4: PCT });
+
+  sectionHeading(sm, 13, 1, 'Key figures');
+  const figures = [
+    ['Orders raised', `COUNTA('PO Log'!$A$${PO.logFirst}:$A$${PO.logLast})`, '#,##0;(#,##0);-',
+      'Every row with a PO number.'],
+    ['Fully received', `COUNTIFS('PO Log'!$K$${PO.logFirst}:$K$${PO.logLast},"Complete")`, '#,##0;(#,##0);-',
+      'Received value matches the order value.'],
+    ['Needing a chase today', `COUNTIFS('PO Log'!$K$${PO.logFirst}:$K$${PO.logLast},"Chase vendor")`, '#,##0;(#,##0);-',
+      'Past the expected date and not fully received.'],
+    ['Total committed', `SUM('PO Log'!$E$${PO.logFirst}:$E$${PO.logLast})`, USD2,
+      'Value of every order raised.'],
+    ['Value still to arrive', `SUM('PO Log'!$G$${PO.logFirst}:$G$${PO.logLast})`, USD2,
+      'Ordered but not yet received.'],
+    ['Overdue value', `SUMIFS('PO Log'!$G$${PO.logFirst}:$G$${PO.logLast},'PO Log'!$H$${PO.logFirst}:$H$${PO.logLast},">0")`, USD2,
+      'The part of that which is already late.'],
+  ];
+  figures.forEach(([label, f, fmt, note], i) => {
+    const r = 14 + i;
+    sm.getCell(r, 1).value = label;
+    sm.getCell(r, 3).value = { formula: f };
+    sm.getCell(r, 3).numFmt = fmt;
+    sm.getCell(r, 5).value = note;
+    sm.getCell(r, 5).font = { name: BODY_FONT, size: 9, italic: true, color: { argb: MUTED } };
+  });
+  bodyBlock(sm, 14, 13 + figures.length, 1, 3);
+  figures.forEach(([, , fmt], i) => { sm.getCell(14 + i, 3).numFmt = fmt; });
+
+  const chk = 14 + figures.length + 1;
+  sectionHeading(sm, chk, 1, 'Check');
+  sm.getCell(chk + 1, 1).value = 'Buckets against the log';
+  sm.getCell(chk + 1, 1).font = body();
+  sm.getCell(chk + 1, 3).value = {
+    formula: `IF(ROUND(C11-C${14 + 4},2)=0,"Agrees","Out by "&TEXT(C11-C${14 + 4},"#,##0.00"))`,
+  };
+  sm.getCell(chk + 1, 3).font = { name: HEAD_FONT, size: 10, bold: true, color: { argb: GREEN_DK } };
+  sm.getCell(chk + 1, 3).fill = fill(MINT);
+  sm.getCell(chk + 1, 3).border = box;
+  sm.getCell(chk + 1, 3).alignment = { horizontal: 'center' };
+
+  await save(wb, 'purchase-order.xlsx');
+  setTheme('house');
+}
+
+// ---------------------------------------------------------------
 
 async function main() {
   if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
@@ -1691,13 +2012,15 @@ async function main() {
   await attendance();
   await personalBudgetPlanner();
   await debtPayoff();
+  await purchaseOrder();
   console.log("Done.");
 }
 
 // Exported so the verification script can compute expected values from the same
 // source arrays, rather than from the formulas it is supposed to be checking.
 module.exports = { MONTHS, INCOME_LINES, EXPENSE_LINES, CATEGORIES, P,
-                    DEBTS, EXTRA_PAYMENT, START_SERIAL, HORIZON, D, S };
+                    DEBTS, EXTRA_PAYMENT, START_SERIAL, HORIZON, D, S,
+                    PO_SETTINGS, PO_LINES, PO_LOG, PO_BUCKETS, PO };
 
 if (require.main === module) {
   main().catch((e) => {
