@@ -260,6 +260,32 @@ function markInput(ws, row, col) {
   return c;
 }
 
+/**
+ * Writes wrapped prose into a cell and makes the row tall enough to show all of
+ * it.
+ *
+ * Excel does not auto-fit a row whose height has been set, and it will not
+ * auto-fit wrapped text reliably even when it has not. Left alone, a 250
+ * character paragraph in a 40-wide column silently loses everything past the
+ * second line. The originals avoid this by merging three columns to widen the
+ * wrap area; this widens the column instead, which reads the same and keeps the
+ * no-merged-cells rule.
+ *
+ * The estimate is deliberately generous. A row an eighth too tall looks fine; a
+ * row an eighth too short hides a sentence.
+ */
+function prose(ws, row, col, text, width, font) {
+  const cell = ws.getCell(row, col);
+  cell.value = text;
+  cell.font = font ?? body();
+  cell.alignment = { wrapText: true, vertical: 'top' };
+
+  const perLine = Math.max(20, Math.floor(width * 0.92));
+  const lines = text.split('\n').reduce((n, para) => n + Math.max(1, Math.ceil(para.length / perLine)), 0);
+  ws.getRow(row).height = Math.max(15, lines * 12.75 + 4);
+  return cell;
+}
+
 function caption(ws, row, col, text) {
   const c = ws.getCell(row, col);
   c.value = text;
@@ -272,44 +298,37 @@ function caption(ws, row, col, text) {
  * 40/30/30, the banner on rows 1 and 2, then heading and body alternating with
  * a blank row between each pair. Headings are prefixed with # by the caller.
  */
+const README_WIDTH = 104;
+
 function readMe(wb, title, lines) {
   const ws = wb.addWorksheet('Read me', { properties: { tabColor: { argb: MUTED } } });
-  setup(ws, { widths: [40, 30, 30] });
-  titleBlock(ws, 1, 'How this workbook works', null, 3);
+  // One wide column rather than the originals' three merged ones. Same reading
+  // width, no merged cells, and prose() can size each row to its own text.
+  setup(ws, { widths: [README_WIDTH] });
+  titleBlock(ws, 1, 'How this workbook works', null, 1);
 
   let r = 4;
   sectionHeading(ws, r, 1, 'What this is');
   r++;
-  ws.getCell(r, 1).value = title;
-  ws.getCell(r, 1).font = body();
-  ws.getCell(r, 1).alignment = { wrapText: true, vertical: 'top' };
-  ws.getRow(r).height = 33.75;
+  prose(ws, r, 1, title, README_WIDTH);
   r += 2;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of lines) {
     if (!line) continue;
     if (line.startsWith('#')) {
       sectionHeading(ws, r, 1, line.slice(1).trim());
       r++;
     } else {
-      const cell = ws.getCell(r, 1);
-      cell.value = line;
-      cell.font = body();
-      cell.alignment = { wrapText: true, vertical: 'top' };
-      ws.getRow(r).height = line.length > 150 ? 48 : 33.75;
+      prose(ws, r, 1, line, README_WIDTH);
       r += 2;
     }
   }
 
   sectionHeading(ws, r, 1, 'Reading the colors');
   r++;
-  const key = ws.getCell(r, 1);
-  key.value =
-    'Blue figures are yours to type over. Black figures are calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modeling convention, so anyone in a finance or audit role will read it without being told.';
-  key.font = body();
-  key.alignment = { wrapText: true, vertical: 'top' };
-  ws.getRow(r).height = 48;
+  prose(ws, r, 1,
+    'Blue figures are yours to type over. Black figures are calculated — typing over one replaces the formula. Green shading is a heading or a total. This is the standard financial-modeling convention, so anyone in a finance or audit role will read it without being told.',
+    README_WIDTH);
   return ws;
 }
 
@@ -327,6 +346,7 @@ async function save(wb, filename) {
 // ---------------------------------------------------------------
 
 async function budgetPlanner() {
+  setTheme('house');
   const wb = new ExcelJS.Workbook();
 
   readMe(wb, 'Monthly budget planner', [
@@ -475,6 +495,7 @@ async function budgetPlanner() {
 // ---------------------------------------------------------------
 
 async function invoice() {
+  setTheme('house');
   const wb = new ExcelJS.Workbook();
 
   readMe(wb, 'Invoice template', [
@@ -687,6 +708,7 @@ async function invoice() {
 // ---------------------------------------------------------------
 
 async function projectTracker() {
+  setTheme('house');
   const wb = new ExcelJS.Workbook();
 
   readMe(wb, 'Project tracker with Gantt', [
@@ -841,6 +863,7 @@ async function projectTracker() {
 // ---------------------------------------------------------------
 
 async function attendance() {
+  setTheme('house');
   const wb = new ExcelJS.Workbook();
 
   readMe(wb, 'Attendance and leave tracker', [
@@ -1100,6 +1123,8 @@ function bandRow(ws, row, label, lastCol) {
 }
 
 async function personalBudgetPlanner() {
+  setTheme('house');
+  USD = USD2; // a household budget is counted to the cent
   const wb = new ExcelJS.Workbook();
   const LAST = P.yearCol;
   const colLetter = (n) => {
@@ -1507,7 +1532,10 @@ function methodSheet(wb, name, orderColumn, tint) {
 }
 
 async function debtPayoff() {
-  setTheme('modern');
+  // House style, like every other template. The two-decimal accounting format
+  // keeps cents visible, which matters when the whole point is interest.
+  setTheme('house');
+  USD = USD2;
   const wb = new ExcelJS.Workbook();
   const nd = DEBTS.length;
 
@@ -1644,12 +1672,9 @@ async function debtPayoff() {
   cmp.getCell(7, 3).alignment = { horizontal: 'center' };
 
   sectionHeading(cmp, 9, 1, 'Which to choose');
-  const note = cmp.getCell(10, 1);
-  note.value =
-    'Avalanche always wins on arithmetic — it is the definition of paying the most expensive money back first. Snowball wins on the thing arithmetic does not measure, which is whether you keep going. If the gap in interest is small, take the one you will actually finish.';
-  note.font = { name: BODY_FONT, size: 10, color: { argb: INK } };
-  note.alignment = { wrapText: true, vertical: 'top' };
-  cmp.getRow(10).height = 46;
+  prose(cmp, 10, 1,
+    'Avalanche always wins on arithmetic — it is the definition of paying the most expensive money back first. Snowball wins on the thing arithmetic does not measure, which is whether you keep going. If the gap in interest is small, take the one you will actually finish.',
+    30);
 
   await save(wb, 'debt-payoff-calculator.xlsx');
   setTheme('house');
